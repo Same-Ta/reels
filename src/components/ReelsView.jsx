@@ -330,9 +330,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
                 {/* 1:1 대화 카드 */}
                 <button 
                   onClick={() => {
-                    saveOneOnOneClick();
-                    setChatMode('payment');
-                    setPaymentStep(1);
+                    setChatMode('oneOnOneInfo');
                   }}
                   className="w-full p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-xl text-left hover:border-purple-500/60 transition-all group"
                 >
@@ -377,6 +375,124 @@ const ReelsView = ({ onClose, onStartChat }) => {
                   </div>
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 1:1 대화 상세 설명 화면 */}
+      {chatMode === 'oneOnOneInfo' && (
+        <div className="fixed inset-0 z-[100] bg-black/70 flex items-center justify-center" onClick={(e) => { if (e.target === e.currentTarget) { setShowChatModal(false); setChatMode(null); }}}>
+          <div className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-2xl shadow-2xl w-[480px] max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* 헤더 */}
+            <div className="relative p-6 pb-4 border-b border-gray-700">
+              <button 
+                onClick={() => setChatMode(null)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={24} />
+              </button>
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center">
+                  <Phone size={28} className="text-white" />
+                </div>
+                <div>
+                  <h2 className="text-white font-bold text-xl">1:1 대화</h2>
+                  <p className="text-purple-400 font-semibold">₩20,000</p>
+                </div>
+              </div>
+            </div>
+
+            {/* 내용 */}
+            <div className="p-6 space-y-6">
+              {/* 멘토 정보 */}
+              <div className="bg-gray-800/50 rounded-xl p-4">
+                <p className="text-gray-400 text-sm mb-2">대화 상대</p>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold">
+                    {selectedMentor?.username?.[0]}
+                  </div>
+                  <div>
+                    <p className="text-white font-semibold">{selectedMentor?.username?.replace('_', ' ')}</p>
+                    <p className="text-gray-400 text-sm">{selectedMentor?.role}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 서비스 설명 */}
+              <div className="space-y-4">
+                <h3 className="text-white font-bold text-lg">서비스 안내</h3>
+                
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Clock size={16} className="text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">30분 자유로운 대화</p>
+                    <p className="text-gray-400 text-sm">현직자와 30분 동안 자유롭게 대화하며 직무에 대해 깊이 있는 탐색을 할 수 있어요.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-pink-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <MessageCircle size={16} className="text-pink-400" />
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">실시간 음성/영상 통화</p>
+                    <p className="text-gray-400 text-sm">일정 조율 후 Zoom 또는 Google Meet를 통해 실시간으로 대화할 수 있어요.</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <FileText size={16} className="text-green-400" />
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">맞춤형 커리어 조언</p>
+                    <p className="text-gray-400 text-sm">이력서 피드백, 면접 팁, 업계 동향 등 궁금한 모든 것을 물어볼 수 있어요.</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 진행 과정 */}
+              <div className="bg-gray-800/50 rounded-xl p-4">
+                <h4 className="text-white font-semibold mb-3">진행 과정</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-purple-500 text-white text-xs flex items-center justify-center">1</span>
+                    <span className="text-gray-300">결제 완료</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-purple-500/60 text-white text-xs flex items-center justify-center">2</span>
+                    <span className="text-gray-300">멘토가 확인 후 일정 제안 (1~3일 소요)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-purple-500/40 text-white text-xs flex items-center justify-center">3</span>
+                    <span className="text-gray-300">일정 확정 후 30분 대화 진행</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 유의사항 */}
+              <div className="text-gray-500 text-xs space-y-1">
+                <p>• 결제 후 멘토가 일정을 제안하면 카카오톡으로 알림을 보내드려요.</p>
+                <p>• 멘토 사정으로 대화가 불가한 경우 전액 환불됩니다.</p>
+                <p>• 결제 후 7일 이내 대화가 성사되지 않으면 자동 환불됩니다.</p>
+              </div>
+            </div>
+
+            {/* 하단 버튼 */}
+            <div className="p-6 pt-0">
+              <button 
+                onClick={() => {
+                  saveOneOnOneClick();
+                  setChatMode('payment');
+                  setPaymentStep(1);
+                }}
+                className="w-full py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold rounded-xl transition-all text-lg"
+              >
+                결제하기
+              </button>
             </div>
           </div>
         </div>
