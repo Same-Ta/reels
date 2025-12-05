@@ -26,10 +26,10 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatMode, setChatMode] = useState(null); // 'oneOnOne' | 'template' | 'payment'
   const [paymentStep, setPaymentStep] = useState(1); // 1: 결제정보, 2: 처리중, 3: 완료
-  const [templateStep, setTemplateStep] = useState(1); // 1: 질문 작성, 2: 전화번호 입력, 3: 완료
+  const [templateStep, setTemplateStep] = useState(1); // 1: 질문 작성, 2: 이메일 입력, 3: 완료
   const [questionSummary, setQuestionSummary] = useState('');
   const [questionDetail, setQuestionDetail] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
   const [selectedMentor, setSelectedMentor] = useState(null); // 선택한 멘토 정보 저장
   // 가이드라인은 처음 한 번만 표시 (localStorage 확인)
   const [showGuide, setShowGuide] = useState(() => {
@@ -76,7 +76,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
         userId: auth.currentUser?.uid || 'anonymous',
         questionSummary: questionSummary,
         questionDetail: questionDetail,
-        phoneNumber: phoneNumber,
+        email: email,
         status: 'pending',
         createdAt: serverTimestamp()
       });
@@ -311,7 +311,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
                   setTemplateStep(1);
                   setQuestionSummary('');
                   setQuestionDetail('');
-                  setPhoneNumber('');
+                  setEmail('');
                 }}
                 className="p-2 hover:bg-gray-700 rounded-full"
               >
@@ -804,7 +804,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
                 setTemplateStep(1);
                 setQuestionSummary('');
                 setQuestionDetail('');
-                setPhoneNumber('');
+                setEmail('');
               }}
               className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full"
             >
@@ -897,32 +897,31 @@ const ReelsView = ({ onClose, onStartChat }) => {
                     <Send size={36} className="text-green-500" />
                   </div>
                   <h2 className="text-gray-900 font-bold text-xl mb-2">질문이 전송될 준비가 되었어요!</h2>
-                  <p className="text-gray-500 text-sm mb-8">답변이 도착하면 알림을 받을 전화번호를 입력해주세요.</p>
+                  <p className="text-gray-500 text-sm mb-8">답변이 도착하면 알림을 받을 이메일 주소를 입력해주세요.</p>
 
                   <div className="max-w-xs mx-auto mb-6">
-                    <label className="text-gray-700 text-sm block mb-2 text-left">전화번호</label>
+                    <label className="text-gray-700 text-sm block mb-2 text-left">이메일 주소</label>
                     <input 
-                      type="tel"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value.replace(/[^0-9]/g, ''))}
-                      placeholder="01012345678"
-                      maxLength={11}
-                      className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-pink-500 text-center text-lg tracking-widest"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="example@email.com"
+                      className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-pink-500 text-center"
                     />
                   </div>
 
                   <p className="text-gray-400 text-sm mb-8">
-                    입력하신 번호로 멘토의 답변 알림이 발송됩니다.
+                    입력하신 이메일로 멘토의 답변 알림이 발송됩니다.
                   </p>
 
                   <button 
                     onClick={async () => {
-                      if (phoneNumber.length >= 10) {
+                      if (email.includes('@') && email.includes('.')) {
                         await saveTemplateQuestion();
                         setTemplateStep(3);
                       }
                     }}
-                    disabled={phoneNumber.length < 10}
+                    disabled={!email.includes('@') || !email.includes('.')}
                     className="w-full max-w-xs py-4 bg-pink-500 hover:bg-pink-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all mx-auto"
                   >
                     질문 전송하기
@@ -941,7 +940,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
                   {selectedMentor?.username?.replace('_', ' ')}님이 답변을 작성하면
                 </p>
                 <p className="text-gray-700 font-medium mb-6">
-                  {phoneNumber.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')}으로 알림을 보내드려요.
+                  {email}로 알림을 보내드려요.
                 </p>
                 <p className="text-gray-400 text-sm mb-8">
                   보통 1~3일 내에 답변이 도착합니다.
@@ -953,7 +952,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
                     setTemplateStep(1);
                     setQuestionSummary('');
                     setQuestionDetail('');
-                    setPhoneNumber('');
+                    setEmail('');
                   }}
                   className="px-12 py-4 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg transition-all"
                 >
