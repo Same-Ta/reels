@@ -5,7 +5,6 @@ import {
   Settings,
   LogOut,
   Play,
-  Briefcase,
   Shield
 } from 'lucide-react';
 
@@ -26,8 +25,8 @@ const Sidebar = ({ currentView, onViewChange, onLogout, onAdminClick, isAdmin })
   return (
     <div className="w-20 bg-[#2c2f33] flex flex-col items-center py-6 gap-8 h-full shadow-xl z-20 flex-shrink-0">
       {/* Logo */}
-      <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-green-400 to-blue-500 flex items-center justify-center shadow-lg mb-4">
-        <Briefcase size={20} className="text-white" />
+      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-lg mb-4 overflow-hidden">
+        <img src="/logo.png" alt="취준로그" className="w-10 h-10 object-contain" />
       </div>
 
       {/* Nav Items */}
