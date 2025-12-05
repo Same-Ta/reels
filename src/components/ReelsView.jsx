@@ -542,7 +542,18 @@ const ReelsView = ({ onClose, onStartChat }) => {
       {/* 결제 화면 - KG이니시스 스타일 모달 팝업 */}
       {chatMode === 'payment' && (
         <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-2 sm:p-4" onClick={(e) => { if (e.target === e.currentTarget) { setShowChatModal(false); setChatMode(null); setPaymentStep(1); }}}>
-          <div className="bg-[#e8e8e8] shadow-2xl w-full max-w-[800px] flex flex-col sm:flex-row overflow-hidden max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-[#e8e8e8] shadow-2xl w-full max-w-[800px] flex flex-col sm:flex-row overflow-hidden max-h-[90vh] relative" onClick={(e) => e.stopPropagation()}>
+            {/* 닫기 버튼 - 최상단 우측 */}
+            <button 
+              onClick={() => {
+                setShowChatModal(false);
+                setChatMode(null);
+                setPaymentStep(1);
+              }}
+              className="absolute top-2 right-2 z-50 w-8 h-8 flex items-center justify-center bg-white rounded-full shadow-md hover:bg-gray-100 text-gray-600 hover:text-gray-800"
+            >
+              <X size={20} />
+            </button>
           {paymentStep === 1 && (
             <>
               {/* 왼쪽: 결제 수단 선택 - 모바일에서 숨김 */}
@@ -696,18 +707,6 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
               {/* 오른쪽: 결제 정보 - 노란색 배경 */}
               <div className="w-full sm:w-[180px] bg-[#fff8dc] p-4 flex flex-col relative">
-                {/* 닫기 버튼 */}
-                <button 
-                  onClick={() => {
-                    setShowChatModal(false);
-                    setChatMode(null);
-                    setPaymentStep(1);
-                  }}
-                  className="absolute top-2 right-2 text-[#ff6666] hover:text-[#ff3333] text-xl font-bold z-10"
-                >
-                  ×
-                </button>
-
                 {/* KG이니시스 로고 */}
                 <div className="mb-4 mt-2">
                   <span className="text-[#ff6600] font-bold text-[15px]">KG</span>
@@ -795,7 +794,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
       {chatMode === 'template' && (
         <div className="absolute inset-0 z-60 bg-white flex flex-col md:flex-row overflow-y-auto">
           {/* 왼쪽: 멘토 정보 */}
-          <div className="w-full md:w-80 md:min-w-[320px] bg-gray-50 p-8 border-r border-gray-200 overflow-y-auto">
+          <div className="w-full md:w-80 md:min-w-[320px] bg-gray-50 p-8 border-r border-gray-200 flex-shrink-0">
             {/* 프로필 이미지 */}
             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl mb-4">
               {selectedMentor?.username?.[0]}
@@ -836,7 +835,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
           </div>
 
           {/* 오른쪽: 질문 폼 */}
-          <div className="w-full flex-1 p-8 overflow-y-auto">
+          <div className="w-full flex-1 p-8">
             {/* 닫기 버튼 */}
             <button 
               onClick={() => {
