@@ -258,37 +258,37 @@ const ReelsView = ({ onClose, onStartChat }) => {
             <iframe 
               key={currentVlog.videoId + currentIndex}
               className="absolute inset-0 w-full h-full pointer-events-none"
-              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0`}
+              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=0&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1`}
               title={currentVlog.username}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; autoplay"
             />
           </div>
 
-          {/* 오버레이 정보 - 하단 컴팩트 */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent pointer-events-none">
+          {/* 오버레이 정보 - 하단 최소화 */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none">
             <div className="pointer-events-auto">
               {/* 프로필 정보 */}
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-base ring-2 ring-white">
+              <div className="flex items-center gap-2 mb-1.5">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm ring-1 ring-white">
                   {currentVlog.username[0]}
                 </div>
                 <div>
-                  <h3 className="text-white font-bold text-base drop-shadow-lg">{currentVlog.username}</h3>
-                  <p className="text-gray-300 text-xs drop-shadow-lg">{currentVlog.role}</p>
+                  <h3 className="text-white font-bold text-sm drop-shadow-lg">{currentVlog.username}</h3>
+                  <p className="text-gray-300 text-[10px] drop-shadow-lg">{currentVlog.role}</p>
                 </div>
               </div>
 
-              {/* 설명 - 2줄 제한 */}
-              <p className="text-white text-xs mb-2 drop-shadow-lg leading-relaxed line-clamp-2">
+              {/* 설명 - 1줄 제한 */}
+              <p className="text-white text-[11px] mb-1.5 drop-shadow-lg leading-tight line-clamp-1">
                 {currentVlog.description}
               </p>
 
               {/* 태그 - 가로 스크롤 */}
-              <div className="flex gap-1.5 overflow-x-auto mb-3 scrollbar-hide">
+              <div className="flex gap-1 overflow-x-auto mb-2 scrollbar-hide">
                 {currentVlog.tags.map(tag => (
                   <span 
                     key={tag} 
-                    className="text-xs bg-white/20 px-2.5 py-0.5 rounded-full text-white backdrop-blur-sm whitespace-nowrap"
+                    className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full text-white backdrop-blur-sm whitespace-nowrap"
                   >
                     {tag}
                   </span>
@@ -311,10 +311,10 @@ const ReelsView = ({ onClose, onStartChat }) => {
                 onTouchEnd={(e) => {
                   e.stopPropagation();
                 }}
-                className="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 text-sm touch-manipulation"
+                className="w-full py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-lg active:scale-95 text-xs touch-manipulation"
                 style={{ WebkitTapHighlightColor: 'transparent' }}
               >
-                <MessageCircle size={18} />
+                <MessageCircle size={16} />
                 이 직무에 대해 질문하기
               </button>
             </div>
