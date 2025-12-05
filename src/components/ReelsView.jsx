@@ -15,20 +15,11 @@ import {
   Shield,
   Loader2
 } from 'lucide-react';
-import { VLOG_DATA, SHUFFLED_VLOG_DATA } from '../data/vlogData';
+import { VLOG_DATA } from '../data/vlogData';
 import { db, auth } from '../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const ReelsView = ({ onClose, onStartChat }) => {
-  // 컴포넌트가 마운트될 때마다 새로운 랜덤 배열 생성
-  const [vlogs] = useState(() => {
-    const shuffled = [...VLOG_DATA];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-  });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [interested, setInterested] = useState({});
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -140,7 +131,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
   };
 
   const goToNext = () => {
-    if (currentIndex < vlogs.length - 1 && !isTransitioning) {
+    if (currentIndex < VLOG_DATA.length - 1 && !isTransitioning) {
       setIsTransitioning(true);
       setCurrentIndex(prev => prev + 1);
       setTimeout(() => setIsTransitioning(false), 300);
@@ -222,13 +213,12 @@ const ReelsView = ({ onClose, onStartChat }) => {
     }
   };
 
-  const currentVlog = vlogs[currentIndex];
+  const currentVlog = VLOG_DATA[currentIndex];
 
   return (
     <div 
       ref={containerRef}
-      className="fixed inset-0 z-50 bg-black flex flex-col overflow-hidden"
-      style={{ height: '100dvh', maxHeight: '100dvh' }}
+      className="absolute inset-0 z-50 bg-black flex flex-col overflow-hidden"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
@@ -251,13 +241,13 @@ const ReelsView = ({ onClose, onStartChat }) => {
       </div>
 
       {/* 메인 릴스 컨테이너 */}
-      <div className="flex-1 flex items-center justify-center relative w-full">
-        {/* 비디오 영역 - 9:16 비율 */}
+      <div className="flex-1 flex items-center justify-center relative w-full pb-32">
+        {/* 비디오 영역 - 9:16 비율 (모바일 하단바 고려) */}
         <div 
           className="relative mx-auto transition-transform duration-300 ease-out"
           style={{
-            width: 'min(100vw, calc((100dvh - 64px) * 9 / 16))',
-            height: 'calc(100dvh - 64px)',
+            width: 'min(100vw, calc((100vh - 180px) * 9 / 16))',
+            height: 'calc(100vh - 180px)',
             maxWidth: '400px',
             transform: isTransitioning ? 'scale(0.95)' : 'scale(1)',
             opacity: isTransitioning ? 0.8 : 1
@@ -268,15 +258,14 @@ const ReelsView = ({ onClose, onStartChat }) => {
             <iframe 
               key={currentVlog.videoId + currentIndex}
               className="absolute inset-0 w-full h-full pointer-events-none"
-              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1`}
+              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=0&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1`}
               title={currentVlog.username}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; autoplay"
             />
           </div>
 
           {/* 오버레이 정보 - 하단 최소화 */}
-          <div className="absolute bottom-0 left-0 right-0 p-3 pb-20 md:pb-6 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none" style={{ paddingBottom: 'max(env(safe-area-inset-bottom, 0px), 5rem)' }}>
+          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none">
             <div className="pointer-events-auto">
               {/* 프로필 정보 */}
               <div className="flex items-center gap-2 mb-1.5">
@@ -870,20 +859,20 @@ const ReelsView = ({ onClose, onStartChat }) => {
               <>
                 <h1 className="text-gray-900 font-bold text-2xl mb-2">멘토에게 질문하기</h1>
                 <p className="text-gray-500 text-sm mb-6">
-                  {selectedMentor?.username}님 고민이 있나요?<br/>
+                  이용건님 고민이 있나요?<br/>
                   커리어, 직무 고민에 대한 해답을 진짜 현직자에게 받아보세요.
                 </p>
 
                 {/* 질문 작성 안내 */}
                 <div className="bg-gray-50 p-4 rounded-lg mb-6">
                   <p className="text-pink-500 font-medium mb-2">질문을 구체적으로 작성해 주세요.</p>
-                  <p className="text-gray-500 text-sm">예시. 신입 개발자로 첫 취업을 준비 중입니다. 포트폴리오에 어떤 프로젝트를 담아야 채용 담당자에게 어필할 수 있을까요?</p>
-                  <p className="text-gray-500 text-sm">예시. 현재 회사에서 3년차인데 연봉 협상을 어떻게 준비해야 할까요? 이직과 내부 승진 중 고민입니다.</p>
+                  <p className="text-gray-500 text-sm">예시. <span className="text-pink-400">영업</span> 직무 취업을 목표로 3개월 계획을 <span className="text-pink-400">세웠습니다.</span></p>
+                  <p className="text-gray-500 text-sm">예시. <span className="text-pink-400">외국계 기업</span>에서 좋은 조건으로 인터뷰를 <span className="text-pink-400">제안하셨습니다.</span></p>
                 </div>
 
-                {/* 제목 (고민 한줄 요약) */}
+                {/* 고민 한줄 요약 */}
                 <div className="mb-4">
-                  <label className="text-gray-700 text-sm block mb-2">제목 (고민 한줄 요약)</label>
+                  <label className="text-gray-700 text-sm block mb-2">고민 한줄 요약</label>
                   <input 
                     type="text"
                     value={questionSummary}
@@ -905,7 +894,6 @@ const ReelsView = ({ onClose, onStartChat }) => {
                   <p className="text-gray-700 font-medium mb-2">서비스 취지에 맞지 않는 질문을 남길 경우 이용이 제한될 수 있습니다.</p>
                   <p className="text-gray-500">- 과제를 목적으로 하는 인터뷰 요청</p>
                   <p className="text-gray-500">- 외부 프로그램 섭외 요청</p>
-                  <p className="text-gray-500">- 사심 표현 등과 같은 사적 질문</p>
                 </div>
 
                 <p className="text-gray-500 text-sm mb-4">
