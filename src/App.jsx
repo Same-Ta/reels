@@ -27,6 +27,8 @@ export default function App() {
     return localStorage.getItem('isAdmin') === 'true';
   });
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
+  const [isChatListCollapsed, setIsChatListCollapsed] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -186,17 +188,47 @@ export default function App() {
           />
         ) : (
           <>
-            {/* Chat List & Chat Window Layout */}
-            <ChatListPanel 
-              currentUser={user} 
-              activeChatId={activeChat?.id} 
-              onSelectChat={setActiveChat} 
-            />
+            {/* 모바일 오버레이 사이드바 */}
+            {showMobileSidebar && (
+              <div 
+                className="md:hidden fixed inset-0 z-50 bg-black/50"
+                onClick={() => setShowMobileSidebar(false)}
+              >
+                <div 
+                  className="absolute left-0 top-0 h-full w-80 bg-[#25282c] shadow-xl animate-slide-in"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <ChatListPanel 
+                    currentUser={user} 
+                    activeChatId={activeChat?.id} 
+                    onSelectChat={(chat) => {
+                      setActiveChat(chat);
+                      setShowMobileSidebar(false);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Chat List: 항상 보임 (모바일에서는 접기 가능) */}
+            <div className={`flex flex-col border-r border-gray-700 h-full ${isChatListCollapsed ? 'w-16' : 'w-full sm:w-80'}`}>
+              <ChatListPanel 
+                currentUser={user} 
+                activeChatId={activeChat?.id} 
+                onSelectChat={setActiveChat}
+                isCollapsed={isChatListCollapsed}
+                onToggleCollapse={() => setIsChatListCollapsed(!isChatListCollapsed)}
+              />
+            </div>
             
-            <ChatArea 
-              activeChat={activeChat} 
-              currentUser={user} 
-            />
+            {/* Chat Window */}
+            <div className="flex-1 flex-col h-full flex">
+              <ChatArea 
+                activeChat={activeChat} 
+                currentUser={user}
+                onToggleSidebar={() => setShowMobileSidebar(true)}
+              />
+            </div>
 
             {/* 3. Reels Overlay (When view is 'reels') */}
             {view === 'reels' && (

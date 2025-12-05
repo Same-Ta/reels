@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { db, appId } from '../config/firebase';
 import { 
   collection, 
@@ -8,7 +8,7 @@ import {
   where 
 } from 'firebase/firestore';
 
-const ChatListPanel = ({ currentUser, activeChatId, onSelectChat }) => {
+const ChatListPanel = ({ currentUser, activeChatId, onSelectChat, isCollapsed, onToggleCollapse }) => {
   const [chats, setChats] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -28,15 +28,40 @@ const ChatListPanel = ({ currentUser, activeChatId, onSelectChat }) => {
     chat.vloggerName?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // 접힘 상태일 때 축소된 뷰
+  if (isCollapsed) {
+    return (
+      <div className="w-16 bg-[#25282c] border-r border-gray-700/50 flex flex-col h-full items-center py-4">
+        <button 
+          onClick={onToggleCollapse}
+          className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center text-gray-300 hover:bg-gray-600"
+        >
+          <ChevronRight size={20} />
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full sm:w-80 bg-[#25282c] border-r border-gray-700/50 flex flex-col h-full flex-shrink-0">
       {/* Search Header */}
       <div className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-white font-bold text-xl">Messages</h2>
-          <button className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-gray-300 hover:bg-gray-600">
-            <span className="text-xl">+</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {onToggleCollapse && (
+              <button 
+                onClick={onToggleCollapse}
+                className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-gray-300 hover:bg-gray-600"
+                title="접기"
+              >
+                <ChevronLeft size={18} />
+              </button>
+            )}
+            <button className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-gray-300 hover:bg-gray-600">
+              <span className="text-xl">+</span>
+            </button>
+          </div>
         </div>
         <div className="relative">
           <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />

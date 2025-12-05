@@ -8,7 +8,8 @@ import {
   MoreHorizontal,
   Briefcase,
   Play,
-  Sparkles
+  Sparkles,
+  Menu
 } from 'lucide-react';
 import { db, appId } from '../config/firebase';
 import { 
@@ -24,7 +25,7 @@ import {
 import { generateSuggestedQuestions } from '../config/gemini';
 import { VLOG_DATA } from '../data/vlogData';
 
-const ChatArea = ({ activeChat, currentUser }) => {
+const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
@@ -134,6 +135,15 @@ const ChatArea = ({ activeChat, currentUser }) => {
         {/* Header */}
         <div className="h-14 sm:h-20 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-8 shadow-sm z-10">
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* 모바일 햄버거 메뉴 버튼 */}
+            {onToggleSidebar && (
+              <button 
+                onClick={onToggleSidebar}
+                className="md:hidden p-2 hover:bg-gray-100 rounded-full transition"
+              >
+                <Menu size={20} className="text-gray-600" />
+              </button>
+            )}
             <div className="relative">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                 {activeChat.vloggerName?.[0] || 'V'}

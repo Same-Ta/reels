@@ -793,9 +793,9 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
       {/* 템플릿 질문 전체 화면 */}
       {chatMode === 'template' && (
-        <div className="absolute inset-0 z-60 bg-white flex">
+        <div className="absolute inset-0 z-60 bg-white flex flex-col md:flex-row overflow-y-auto">
           {/* 왼쪽: 멘토 정보 */}
-          <div className="w-1/3 bg-gray-50 p-8 border-r border-gray-200 overflow-y-auto">
+          <div className="w-full md:w-80 md:min-w-[320px] bg-gray-50 p-8 border-r border-gray-200 overflow-y-auto">
             {/* 프로필 이미지 */}
             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl mb-4">
               {selectedMentor?.username?.[0]}
@@ -836,7 +836,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
           </div>
 
           {/* 오른쪽: 질문 폼 */}
-          <div className="flex-1 p-8 overflow-y-auto">
+          <div className="w-full flex-1 p-8 overflow-y-auto">
             {/* 닫기 버튼 */}
             <button 
               onClick={() => {
