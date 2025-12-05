@@ -434,8 +434,8 @@ const ReelsView = ({ onClose, onStartChat }) => {
           </div>
 
           {/* 내용 - 스크롤 가능 */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-6 space-y-6 max-w-md mx-auto">
+          <div className="flex-1 overflow-y-auto pb-20">
+            <div className="p-4 space-y-4 max-w-md mx-auto">
               {/* 아이콘 */}
               <div className="flex justify-center">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center">
@@ -526,7 +526,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
           </div>
 
           {/* 하단 고정 버튼 */}
-          <div className="p-4 border-t border-gray-800 bg-black">
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-black">
             <div className="max-w-md mx-auto">
               <button 
                 onClick={() => {
