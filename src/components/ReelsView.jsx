@@ -297,11 +297,22 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
               {/* 대화하기 버튼 */}
               <button 
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   setSelectedMentor(currentVlog);
-                  setShowChatModal(true);
+                  setChatMode('select'); // 선택 화면으로 전환
                 }}
-                className="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 text-sm"
+                onTouchStart={(e) => {
+                  e.stopPropagation();
+                }}
+                onTouchMove={(e) => {
+                  e.stopPropagation();
+                }}
+                onTouchEnd={(e) => {
+                  e.stopPropagation();
+                }}
+                className="w-full py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 text-sm touch-manipulation"
+                style={{ WebkitTapHighlightColor: 'transparent' }}
               >
                 <MessageCircle size={18} />
                 이 직무에 대해 질문하기
@@ -336,84 +347,70 @@ const ReelsView = ({ onClose, onStartChat }) => {
         {/* 진행률 표시 - 제거 */}
       </div>
 
-      {/* 대화 선택 모달 */}
-      {showChatModal && !chatMode && (
-        <div className="absolute inset-0 z-60 bg-black/80 flex items-center justify-center p-2 sm:p-4">
-          <div className="bg-[#1e2024] rounded-2xl w-full max-w-md overflow-hidden max-h-[90vh] overflow-y-auto">
-            {/* 모달 헤더 */}
-            <div className="flex items-center justify-between p-3 sm:p-4 border-b border-gray-700">
-              <div className="flex items-center gap-2">
-                <h3 className="text-white font-bold text-base sm:text-lg">멘토에게 질문하기</h3>
-              </div>
-              <button 
-                onClick={() => {
-                  setShowChatModal(false);
-                  setChatMode(null);
-                  setTemplateStep(1);
-                  setQuestionSummary('');
-                  setQuestionDetail('');
-                  setEmail('');
-                }}
-                className="p-2 hover:bg-gray-700 rounded-full"
-              >
-                <X size={20} className="text-gray-400" />
-              </button>
-            </div>
+      {/* 대화 선택 화면 - 페이지 전환 방식 */}
+      {chatMode === 'select' && (
+        <div className="absolute inset-0 z-60 bg-black flex flex-col">
+          {/* 헤더 */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-800">
+            <button 
+              onClick={() => {
+                setChatMode(null);
+                setTemplateStep(1);
+                setQuestionSummary('');
+                setQuestionDetail('');
+                setEmail('');
+              }}
+              className="p-2 hover:bg-gray-800 rounded-full"
+            >
+              <ArrowLeft size={24} className="text-white" />
+            </button>
+            <h3 className="text-white font-bold text-lg">멘토에게 질문하기</h3>
+            <div className="w-10"></div>
+          </div>
 
-            {/* 모달 내용 */}
-            <div className="p-3 sm:p-4">
-              {/* 선택 화면 */}
-              <div className="space-y-3 sm:space-y-4">
-                <p className="text-gray-400 text-xs sm:text-sm mb-3 sm:mb-4">
-                  {selectedMentor?.username}님에게 질문하는 방법을 선택하세요.
-                </p>
-                
+          {/* 내용 */}
+          <div className="flex-1 flex flex-col p-6">
+            <div className="w-full max-w-2xl mx-auto">
+              <p className="text-gray-300 text-base text-center mb-12 mt-8">
+                {selectedMentor?.username}님에게 질문하는 방법을 선택하세요.
+              </p>
+              
+              {/* 가로 배치 카드 */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 {/* 1:1 대화 카드 */}
                 <button 
                   onClick={() => {
                     setChatMode('oneOnOneInfo');
                   }}
-                  className="w-full p-3 sm:p-4 bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30 rounded-xl text-left hover:border-purple-500/60 transition-all group"
+                  className="p-8 bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-500/30 rounded-2xl text-center hover:border-purple-500/60 transition-all active:scale-95 flex flex-col items-center min-h-[280px]"
                 >
-                  <div className="flex items-start gap-3 sm:gap-4">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-purple-500/20 flex items-center justify-center flex-shrink-0">
-                      <MessageSquare size={20} className="text-purple-400 sm:w-6 sm:h-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <h4 className="text-white font-bold text-base sm:text-lg">1:1 대화</h4>
-                        <span className="text-pink-400 font-bold text-sm sm:text-base whitespace-nowrap">₩13,000</span>
-                      </div>
-                      <p className="text-gray-400 text-xs sm:text-sm mt-1">
-                        30분 정도의 자유로운 대화
-                      </p>
-                      <div className="flex items-center gap-2 mt-1.5 sm:mt-2 text-gray-500 text-xs">
-                        <Clock size={12} className="sm:w-3.5 sm:h-3.5" />
-                        <span>약 30분 소요</span>
-                      </div>
-                    </div>
+                  <div className="w-20 h-20 rounded-full bg-purple-500/30 flex items-center justify-center mb-4">
+                    <MessageSquare size={40} className="text-purple-400" />
+                  </div>
+                  <h4 className="text-white font-bold text-2xl mb-3">1:1 대화</h4>
+                  <span className="text-pink-400 font-bold text-xl mb-3">₩13,000</span>
+                  <p className="text-gray-400 text-base mb-3">
+                    30분 정도의 자유로운 대화
+                  </p>
+                  <div className="flex items-center gap-2 text-gray-500 text-sm">
+                    <Clock size={14} />
+                    <span>약 30분 소요</span>
                   </div>
                 </button>
 
                 {/* 템플릿 질문 카드 */}
                 <button 
                   onClick={() => setChatMode('template')}
-                  className="w-full p-3 sm:p-4 bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30 rounded-xl text-left hover:border-green-500/60 transition-all group"
+                  className="p-8 bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-500/30 rounded-2xl text-center hover:border-green-500/60 transition-all active:scale-95 flex flex-col items-center min-h-[280px]"
                 >
-                  <div className="flex items-start gap-3 sm:gap-4">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0">
-                      <FileText size={20} className="text-green-400 sm:w-6 sm:h-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <h4 className="text-white font-bold text-base sm:text-lg">템플릿으로 질문하기</h4>
-                        <span className="text-green-400 font-bold text-sm sm:text-base whitespace-nowrap">1회 무료</span>
-                      </div>
-                      <p className="text-gray-400 text-xs sm:text-sm mt-1">
-                        질문을 작성하면 답변이 도착할 때 알림을 받아요
-                      </p>
-                    </div>
+                  <div className="w-20 h-20 rounded-full bg-green-500/30 flex items-center justify-center mb-4">
+                    <FileText size={40} className="text-green-400" />
                   </div>
+                  <h4 className="text-white font-bold text-2xl mb-3">템플릿으로 질문하기</h4>
+                  <span className="text-green-400 font-bold text-xl mb-3">1회 무료</span>
+                  <p className="text-gray-400 text-sm">
+                    질문을 작성하면 답변이 도착할 때 알림을 받아요
+                  </p>
                 </button>
               </div>
             </div>
@@ -421,31 +418,36 @@ const ReelsView = ({ onClose, onStartChat }) => {
         </div>
       )}
 
-      {/* 1:1 대화 상세 설명 화면 */}
+      {/* 1:1 대화 상세 설명 화면 - 페이지 전환 방식 */}
       {chatMode === 'oneOnOneInfo' && (
-        <div className="fixed inset-0 z-[100] bg-black/70 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) { setShowChatModal(false); setChatMode(null); }}}>
-          <div className="bg-gradient-to-b from-gray-900 to-gray-800 rounded-2xl shadow-2xl w-full max-w-[480px] max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-            {/* 헤더 */}
-            <div className="relative p-4 sm:p-6 pb-4 border-b border-gray-700">
-              <button 
-                onClick={() => setChatMode(null)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-              >
-                <X size={24} />
-              </button>
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center">
-                  <MessageSquare size={28} className="text-white" />
-                </div>
-                <div>
-                  <h2 className="text-white font-bold text-lg sm:text-xl">1:1 대화</h2>
-                  <p className="text-purple-400 font-semibold">₩13,000</p>
+        <div className="absolute inset-0 z-[70] bg-black flex flex-col">
+          {/* 헤더 */}
+          <div className="flex items-center justify-between p-4 border-b border-gray-800">
+            <button 
+              onClick={() => setChatMode('select')}
+              className="p-2 hover:bg-gray-800 rounded-full"
+            >
+              <ArrowLeft size={24} className="text-white" />
+            </button>
+            <h3 className="text-white font-bold text-lg">1:1 대화</h3>
+            <div className="w-10"></div>
+          </div>
+
+          {/* 내용 - 스크롤 가능 */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-6 space-y-6 max-w-md mx-auto">
+              {/* 아이콘 */}
+              <div className="flex justify-center">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-purple-500 to-pink-500 flex items-center justify-center">
+                  <MessageSquare size={32} className="text-white" />
                 </div>
               </div>
-            </div>
 
-            {/* 내용 */}
-            <div className="p-4 sm:p-6 space-y-4 sm:space-y-6">
+              {/* 제목 */}
+              <div className="text-center">
+                <h2 className="text-white font-bold text-xl">1:1 대화</h2>
+                <p className="text-purple-400 font-semibold text-lg mt-1">₩13,000</p>
+              </div>
               {/* 멘토 정보 */}
               <div className="bg-gray-800/50 rounded-xl p-3 sm:p-4">
                 <p className="text-gray-400 text-xs sm:text-sm mb-2">대화 상대</p>
@@ -515,22 +517,24 @@ const ReelsView = ({ onClose, onStartChat }) => {
               </div>
 
               {/* 유의사항 */}
-              <div className="text-gray-500 text-[10px] sm:text-xs space-y-1">
+              <div className="text-gray-500 text-xs space-y-1">
                 <p>• 결제 후 멘토가 일정을 제안하면 카카오톡으로 알림을 보내드려요.</p>
                 <p>• 멘토 사정으로 대화가 불가한 경우 전액 환불됩니다.</p>
                 <p>• 결제 후 7일 이내 대화가 성사되지 않으면 자동 환불됩니다.</p>
               </div>
             </div>
+          </div>
 
-            {/* 하단 버튼 */}
-            <div className="p-4 sm:p-6 pt-0">
+          {/* 하단 고정 버튼 */}
+          <div className="p-4 border-t border-gray-800 bg-black">
+            <div className="max-w-md mx-auto">
               <button 
                 onClick={() => {
                   saveOneOnOneClick();
                   setChatMode('payment');
                   setPaymentStep(1);
                 }}
-                className="w-full py-3 sm:py-4 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold rounded-xl transition-all text-base sm:text-lg"
+                className="w-full py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-semibold rounded-lg transition-all text-sm active:scale-95"
               >
                 결제하기
               </button>
