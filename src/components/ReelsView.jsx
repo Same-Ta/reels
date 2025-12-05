@@ -241,13 +241,13 @@ const ReelsView = ({ onClose, onStartChat }) => {
       </div>
 
       {/* 메인 릴스 컨테이너 */}
-      <div className="flex-1 flex items-center justify-center relative w-full pb-32">
+      <div className="flex-1 flex items-center justify-center relative w-full pb-20">
         {/* 비디오 영역 - 9:16 비율 (모바일 하단바 고려) */}
         <div 
           className="relative mx-auto transition-transform duration-300 ease-out"
           style={{
-            width: 'min(100vw, calc((100vh - 180px) * 9 / 16))',
-            height: 'calc(100vh - 180px)',
+            width: 'min(100vw, calc((100vh - 140px) * 9 / 16))',
+            height: 'calc(100vh - 140px)',
             maxWidth: '400px',
             transform: isTransitioning ? 'scale(0.95)' : 'scale(1)',
             opacity: isTransitioning ? 0.8 : 1
