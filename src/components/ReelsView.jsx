@@ -30,6 +30,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const [questionSummary, setQuestionSummary] = useState('');
   const [questionDetail, setQuestionDetail] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [selectedMentor, setSelectedMentor] = useState(null); // 선택한 멘토 정보 저장
   // 가이드라인은 처음 한 번만 표시 (localStorage 확인)
   const [showGuide, setShowGuide] = useState(() => {
     const hasSeenGuide = localStorage.getItem('hasSeenReelsGuide');
@@ -48,11 +49,12 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
   // 1:1 대화 클릭 정보 저장
   const saveOneOnOneClick = async () => {
+    if (!selectedMentor) return;
     try {
       await addDoc(collection(db, 'oneOnOneClicks'), {
-        mentorId: currentVlog.id,
-        mentorName: currentVlog.username,
-        mentorRole: currentVlog.role,
+        mentorId: selectedMentor.id,
+        mentorName: selectedMentor.username,
+        mentorRole: selectedMentor.role,
         userId: auth.currentUser?.uid || 'anonymous',
         amount: 20000,
         status: 'clicked',
@@ -65,11 +67,12 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
   // 템플릿 질문 저장
   const saveTemplateQuestion = async () => {
+    if (!selectedMentor) return;
     try {
       await addDoc(collection(db, 'templateQuestions'), {
-        mentorId: currentVlog.id,
-        mentorName: currentVlog.username,
-        mentorRole: currentVlog.role,
+        mentorId: selectedMentor.id,
+        mentorName: selectedMentor.username,
+        mentorRole: selectedMentor.role,
         userId: auth.currentUser?.uid || 'anonymous',
         questionSummary: questionSummary,
         questionDetail: questionDetail,
@@ -105,6 +108,14 @@ const ReelsView = ({ onClose, onStartChat }) => {
   // 키보드 이벤트 처리
   useEffect(() => {
     const handleKeyDown = (e) => {
+      // 모달이 열려있으면 스크롤 이벤트 무시
+      if (showChatModal || chatMode) {
+        if (e.key === 'Escape') {
+          setShowChatModal(false);
+          setChatMode(null);
+        }
+        return;
+      }
       if (e.key === 'ArrowDown' || e.key === 'j') goToNext();
       if (e.key === 'ArrowUp' || e.key === 'k') goToPrev();
       if (e.key === 'Escape') onClose();
@@ -112,11 +123,15 @@ const ReelsView = ({ onClose, onStartChat }) => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex, isTransitioning]);
+  }, [currentIndex, isTransitioning, showChatModal, chatMode]);
 
   // 마우스 휠 이벤트 처리
   useEffect(() => {
     const handleWheel = (e) => {
+      // 모달이 열려있으면 스크롤 이벤트 무시
+      if (showChatModal || chatMode) {
+        return;
+      }
       e.preventDefault();
       if (e.deltaY > 0) goToNext();
       else if (e.deltaY < 0) goToPrev();
@@ -132,18 +147,24 @@ const ReelsView = ({ onClose, onStartChat }) => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentIndex, isTransitioning]);
+  }, [currentIndex, isTransitioning, showChatModal, chatMode]);
 
   // 터치 이벤트 처리
   const handleTouchStart = (e) => {
+    // 모달이 열려있으면 터치 이벤트 무시
+    if (showChatModal || chatMode) return;
     touchStartY.current = e.touches[0].clientY;
   };
 
   const handleTouchMove = (e) => {
+    // 모달이 열려있으면 터치 이벤트 무시
+    if (showChatModal || chatMode) return;
     touchEndY.current = e.touches[0].clientY;
   };
 
   const handleTouchEnd = () => {
+    // 모달이 열려있으면 터치 이벤트 무시
+    if (showChatModal || chatMode) return;
     const diff = touchStartY.current - touchEndY.current;
     if (Math.abs(diff) > 50) {
       if (diff > 0) goToNext();
@@ -235,7 +256,10 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
               {/* 대화하기 버튼 */}
               <button 
-                onClick={() => setShowChatModal(true)}
+                onClick={() => {
+                  setSelectedMentor(currentVlog); // 선택한 멘토 정보 저장
+                  setShowChatModal(true);
+                }}
                 className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95"
               >
                 <MessageCircle size={20} />
@@ -300,7 +324,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
               {/* 선택 화면 */}
               <div className="space-y-4">
                 <p className="text-gray-400 text-sm mb-4">
-                  {currentVlog.username}님에게 질문하는 방법을 선택하세요.
+                  {selectedMentor?.username}님에게 질문하는 방법을 선택하세요.
                 </p>
                 
                 {/* 1:1 대화 카드 */}
@@ -589,7 +613,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
                 </div>
                 <h3 className="text-gray-900 font-bold text-xl mb-2">결제가 완료되었습니다!</h3>
                 <p className="text-gray-500 mb-6">
-                  {currentVlog.username}님과의 1:1 대화가 예약되었습니다.<br/>
+                  {selectedMentor?.username}님과의 1:1 대화가 예약되었습니다.<br/>
                   멘토가 확인 후 연락드릴 예정입니다.
                 </p>
                 <button 
@@ -597,7 +621,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
                     setShowChatModal(false);
                     setChatMode(null);
                     setPaymentStep(1);
-                    onStartChat(currentVlog);
+                    onStartChat(selectedMentor);
                   }}
                   className="px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-gray-800 font-bold rounded-lg transition-all"
                 >
@@ -617,25 +641,25 @@ const ReelsView = ({ onClose, onStartChat }) => {
           <div className="w-1/3 bg-gray-50 p-8 border-r border-gray-200 overflow-y-auto">
             {/* 프로필 이미지 */}
             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl mb-4">
-              {currentVlog.username[0]}
+              {selectedMentor?.username?.[0]}
             </div>
 
             {/* 카테고리 */}
-            <p className="text-gray-500 text-sm mb-1">{currentVlog.tags[0]?.replace('#', '')}</p>
+            <p className="text-gray-500 text-sm mb-1">{selectedMentor?.tags?.[0]?.replace('#', '')}</p>
             
             {/* 이름 + 신규 멘토 뱃지 */}
             <div className="flex items-center gap-2 mb-2">
-              <h2 className="text-gray-900 font-bold text-xl">{currentVlog.username.replace('_', ' ')}</h2>
+              <h2 className="text-gray-900 font-bold text-xl">{selectedMentor?.username?.replace('_', ' ')}</h2>
               <span className="bg-pink-500 text-white text-xs px-2 py-0.5 rounded">신규 멘토</span>
             </div>
 
             {/* 회사/직무 */}
-            <p className="text-blue-600 text-sm mb-4">{currentVlog.role}</p>
+            <p className="text-blue-600 text-sm mb-4">{selectedMentor?.role}</p>
 
             {/* 자기소개 */}
             <div className="text-gray-700 text-sm leading-relaxed space-y-3">
               <p>안녕하세요!</p>
-              <p>{currentVlog.description}</p>
+              <p>{selectedMentor?.description}</p>
               <p>커리어, 직무 고민에 대한 해답을 진짜 현직자에게 받아보세요.</p>
               <p>짧지만 여러 회사를 밀도있게 다녀본 경험이 궁금하시다면!</p>
               <p className="text-blue-600 underline cursor-pointer">질문을 남겨주세요~</p>
@@ -798,7 +822,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
                 </div>
                 <h2 className="text-gray-900 font-bold text-2xl mb-4">질문이 전송되었습니다!</h2>
                 <p className="text-gray-500 mb-2">
-                  {currentVlog.username.replace('_', ' ')}님이 답변을 작성하면
+                  {selectedMentor?.username?.replace('_', ' ')}님이 답변을 작성하면
                 </p>
                 <p className="text-gray-700 font-medium mb-6">
                   {phoneNumber.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')}으로 알림을 보내드려요.
