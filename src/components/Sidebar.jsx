@@ -25,8 +25,8 @@ const Sidebar = ({ currentView, onViewChange, onLogout, onAdminClick, isAdmin })
   return (
     <div className="w-20 bg-[#2c2f33] flex flex-col items-center py-6 gap-8 h-full shadow-xl z-20 flex-shrink-0">
       {/* Logo */}
-      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-lg mb-4 overflow-hidden">
-        <img src="/logo.png" alt="취준로그" className="w-10 h-10 object-contain" />
+      <div className="w-14 h-14 rounded-lg bg-white flex items-center justify-center shadow-lg mb-4 p-1">
+        <img src="/logo.png" alt="취준로그" className="w-full h-full object-contain" />
       </div>
 
       {/* Nav Items */}
