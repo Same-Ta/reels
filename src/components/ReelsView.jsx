@@ -15,11 +15,20 @@ import {
   Shield,
   Loader2
 } from 'lucide-react';
-import { VLOG_DATA } from '../data/vlogData';
+import vlogDataDefault from '../data/vlogData';
 import { db, auth } from '../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 const ReelsView = ({ onClose, onStartChat }) => {
+  // 컴포넌트 마운트 시 랜덤 배열 생성
+  const [shuffledVlogs] = useState(() => {
+    const array = [...vlogDataDefault];
+    for (let i = array.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [array[i], array[j]] = [array[j], array[i]];
+    }
+    return array;
+  });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [interested, setInterested] = useState({});
   const [isTransitioning, setIsTransitioning] = useState(false);
@@ -131,7 +140,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
   };
 
   const goToNext = () => {
-    if (currentIndex < VLOG_DATA.length - 1 && !isTransitioning) {
+    if (currentIndex < shuffledVlogs.length - 1 && !isTransitioning) {
       setIsTransitioning(true);
       setCurrentIndex(prev => prev + 1);
       setTimeout(() => setIsTransitioning(false), 300);
@@ -213,7 +222,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
     }
   };
 
-  const currentVlog = VLOG_DATA[currentIndex];
+  const currentVlog = shuffledVlogs[currentIndex];
 
   return (
     <div 
@@ -229,7 +238,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
           <Play size={20} className="text-pink-500 fill-pink-500" />
           Job Reels
           <span className="text-sm font-normal text-gray-400 ml-2">
-            {currentIndex + 1} / {VLOG_DATA.length}
+            {currentIndex + 1} / {shuffledVlogs.length}
           </span>
         </h2>
         <button 
@@ -859,20 +868,20 @@ const ReelsView = ({ onClose, onStartChat }) => {
               <>
                 <h1 className="text-gray-900 font-bold text-2xl mb-2">멘토에게 질문하기</h1>
                 <p className="text-gray-500 text-sm mb-6">
-                  이용건님 고민이 있나요?<br/>
+                  OOO님 고민이 있나요?<br/>
                   커리어, 직무 고민에 대한 해답을 진짜 현직자에게 받아보세요.
                 </p>
 
                 {/* 질문 작성 안내 */}
                 <div className="bg-gray-50 p-4 rounded-lg mb-6">
                   <p className="text-pink-500 font-medium mb-2">질문을 구체적으로 작성해 주세요.</p>
-                  <p className="text-gray-500 text-sm">예시. <span className="text-pink-400">영업</span> 직무 취업을 목표로 3개월 계획을 <span className="text-pink-400">세웠습니다.</span></p>
-                  <p className="text-gray-500 text-sm">예시. <span className="text-pink-400">외국계 기업</span>에서 좋은 조건으로 인터뷰를 <span className="text-pink-400">제안하셨습니다.</span></p>
+                  <p className="text-gray-500 text-sm">예시. 마케팅 직무로 전환을 고려 중인데, <span className="text-pink-400">비전공자도 가능한지, 어떤 준비가 필요한지, 실제 업무는 어떤 것들이 있는지</span> 구체적으로 알고 싶습니다.</p>
+                  <p className="text-gray-500 text-sm">예시. IT 스타트업으로 이직을 고민 중인데, <span className="text-pink-400">대기업과 스타트업의 업무 방식 차이는 무엇인지, 커리어 성장 측면에서 어떤 장단점이 있는지</span> 조언을 듣고 싶습니다.</p>
                 </div>
 
                 {/* 고민 한줄 요약 */}
                 <div className="mb-4">
-                  <label className="text-gray-700 text-sm block mb-2">고민 한줄 요약</label>
+                  <label className="text-gray-700 text-sm block mb-2">제목(고민 한줄 요약)</label>
                   <input 
                     type="text"
                     value={questionSummary}
@@ -894,6 +903,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
                   <p className="text-gray-700 font-medium mb-2">서비스 취지에 맞지 않는 질문을 남길 경우 이용이 제한될 수 있습니다.</p>
                   <p className="text-gray-500">- 과제를 목적으로 하는 인터뷰 요청</p>
                   <p className="text-gray-500">- 외부 프로그램 섭외 요청</p>
+                  <p className="text-gray-500">- 사적 표현 등 관련없는 질문</p>
                 </div>
 
                 <p className="text-gray-500 text-sm mb-4">
@@ -911,7 +921,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
                   />
                 </div>
 
-                {/* 미리보기 버튼 */}
+                {/* 전송하기 버튼 */}
                 <button 
                   onClick={() => {
                     if (questionSummary.trim() && questionDetail.trim()) {
@@ -921,7 +931,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
                   disabled={!questionSummary.trim() || !questionDetail.trim()}
                   className="w-full py-4 bg-pink-500 hover:bg-pink-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all"
                 >
-                  미리보기
+                  전송하기
                 </button>
               </>
             )}

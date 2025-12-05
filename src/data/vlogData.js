@@ -122,17 +122,6 @@ export const VLOG_DATA = [
     tags: ['#PD', '#방송', '#미디어']
   },
   {
-    id: 'vlog_13',
-    videoId: 'KYuXyqGj7RE',
-    username: '신약개발_연구원',
-    role: '제약 연구원',
-    location: 'Gyeonggi, Pangyo',
-    email: 'pharma_research@bio.kr',
-    description: '신약을 개발하는 연구원의 하루 🧪💊',
-    likes: 8700,
-    tags: ['#연구원', '#제약', '#신약개발']
-  },
-  {
     id: 'vlog_14',
     videoId: 'VEENoB3NtgQ',
     username: '식품공장_생산직',
@@ -362,7 +351,436 @@ export const VLOG_DATA = [
     description: '상세페이지 디자이너의 작업 브이로그 🎨🛒',
     likes: 12300,
     tags: ['#디자이너', '#상세페이지', '#이커머스']
+  },
+  {
+    id: 'vlog_36',
+    videoId: '0I-GPH5NcCA',
+    username: '외국계회사_직원',
+    role: '외국계 기업 직원',
+    location: 'Seoul, Korea',
+    email: 'foreign_company@corp.kr',
+    description: '외국계 회사에서 일하는 직원의 하루 🌏💼',
+    likes: 14500,
+    tags: ['#외국계', '#글로벌기업', '#회사생활']
+  },
+  {
+    id: 'vlog_37',
+    videoId: 'oK9B5n5i-WU',
+    username: '뷰티_마케터',
+    role: '뷰티 마케터',
+    location: 'Seoul, Gangnam',
+    email: 'beauty_marketer@cosmetic.kr',
+    description: '뷰티 마케터의 리얼 일상 브이로그 💄✨',
+    likes: 13200,
+    tags: ['#뷰티마케터', '#화장품', '#마케팅']
+  },
+  {
+    id: 'vlog_38',
+    videoId: 'ZYeeMwdk954',
+    username: '뷰티대기업_인턴',
+    role: '뷰티 대기업 인턴',
+    location: 'Seoul, Korea',
+    email: 'beauty_intern@corp.kr',
+    description: '뷰티 대기업 인턴의 하루 일과 🌸💼',
+    likes: 11800,
+    tags: ['#인턴', '#뷰티대기업', '#신입']
+  },
+  {
+    id: 'vlog_39',
+    videoId: 'XfDCz6tBqFM',
+    username: '뷰티_직무',
+    role: '뷰티 업계 직원',
+    location: 'Seoul, Korea',
+    email: 'beauty_job@cosmetic.kr',
+    description: '뷰티 업계에서 일하는 직원의 브이로그 💋',
+    likes: 9700,
+    tags: ['#뷰티', '#직무', '#화장품']
+  },
+  {
+    id: 'vlog_40',
+    videoId: '--2FHU5Doq4',
+    username: '연구원_브이로그',
+    role: '연구원',
+    location: 'Gyeonggi, Korea',
+    email: 'researcher@lab.kr',
+    description: '연구원의 하루 일과 공개 🔬📊',
+    likes: 10200,
+    tags: ['#연구원', '#연구소', '#과학']
+  },
+  {
+    id: 'vlog_41',
+    videoId: 'RnN7qD5L00s',
+    username: '화장품_연구원',
+    role: '화장품 연구원',
+    location: 'Gyeonggi, Korea',
+    email: 'cosmetic_researcher@beauty.kr',
+    description: '화장품 연구원의 신제품 개발 일상 🧴🔬',
+    likes: 12600,
+    tags: ['#화장품', '#연구원', '#R&D']
+  },
+  {
+    id: 'vlog_42',
+    videoId: 'otQPLvJdW6o',
+    username: '생명공학_연구원',
+    role: '생명공학 연구원',
+    location: 'Gyeonggi, Korea',
+    email: 'bio_researcher@lab.kr',
+    description: '생명공학 연구원의 실험실 브이로그 🧬🔬',
+    likes: 8900,
+    tags: ['#연구원', '#생명공학', '#바이오']
+  },
+  {
+    id: 'vlog_43',
+    videoId: 'Pi5ahO8icSU',
+    username: '화학_연구원',
+    role: '화학 연구원',
+    location: 'Gyeonggi, Korea',
+    email: 'chem_researcher@lab.kr',
+    description: '화학 연구원의 하루 일과 ⚗️🔬',
+    likes: 9400,
+    tags: ['#화학', '#연구원', '#실험']
+  },
+  {
+    id: 'vlog_44',
+    videoId: 'YRtUcewySpA',
+    username: '소프트웨어_개발자',
+    role: '소프트웨어 개발자',
+    location: 'Seoul, Korea',
+    email: 'sw_developer@tech.kr',
+    description: '소프트웨어 개발자의 코딩 일상 💻🖥️',
+    likes: 15800,
+    tags: ['#개발자', '#소프트웨어', '#코딩']
+  },
+  {
+    id: 'vlog_45',
+    videoId: 'NPjIoZ5cDTY',
+    username: 'IT_개발자',
+    role: 'IT 개발자',
+    location: 'Seoul, Korea',
+    email: 'it_dev@tech.kr',
+    description: 'IT 개발자의 리얼 브이로그 🖥️✨',
+    likes: 14200,
+    tags: ['#IT', '#개발자', '#프로그래밍']
+  },
+  {
+    id: 'vlog_46',
+    videoId: 'c-kHJvXQp7w',
+    username: '광고회사_직원',
+    role: '광고회사 직원',
+    location: 'Seoul, Korea',
+    email: 'ad_agency@marketing.kr',
+    description: '광고회사에서 일하는 직원의 하루 📺🎬',
+    likes: 11500,
+    tags: ['#광고', '#광고회사', '#마케팅']
+  },
+  {
+    id: 'vlog_47',
+    videoId: 'RHE9d5W-ZOA',
+    username: '행사_기획자',
+    role: '행사 기획자',
+    location: 'Seoul, Korea',
+    email: 'event_planner@event.kr',
+    description: '행사 기획자의 이벤트 준비 브이로그 🎉📋',
+    likes: 10800,
+    tags: ['#행사기획', '#이벤트', '#기획']
+  },
+  {
+    id: 'vlog_48',
+    videoId: '_A6oTCG26F4',
+    username: '앱_개발자',
+    role: '앱 개발자',
+    location: 'Seoul, Korea',
+    email: 'app_developer@mobile.kr',
+    description: '앱 개발자의 개발 일상 브이로그 📱💻',
+    likes: 13700,
+    tags: ['#앱개발자', '#모바일', '#개발']
+  },
+  {
+    id: 'vlog_49',
+    videoId: 'iA9fazc6ypA',
+    username: '고등학교_교사',
+    role: '고등학교 교사',
+    location: 'Seoul, Korea',
+    email: 'high_teacher@school.kr',
+    description: '고등학교 교사의 하루 일과 👩‍🏫📚',
+    likes: 12400,
+    tags: ['#교사', '#고등학교', '#선생님']
+  },
+  {
+    id: 'vlog_50',
+    videoId: 'It8eKEuv8tA',
+    username: '은행원_브이로그',
+    role: '은행원',
+    location: 'Seoul, Korea',
+    email: 'banker@bank.kr',
+    description: '은행원의 리얼 업무 브이로그 🏦💰',
+    likes: 9800,
+    tags: ['#은행원', '#금융', '#은행']
+  },
+  {
+    id: 'vlog_51',
+    videoId: 'FcSOH0LVOM0',
+    username: '식품공학_전공',
+    role: '식품공학 전공자',
+    location: 'Seoul, Korea',
+    email: 'food_eng@university.kr',
+    description: '식품공학과 학생의 전공 생활 🍜🔬',
+    likes: 8600,
+    tags: ['#식품공학', '#대학생', '#전공']
+  },
+  {
+    id: 'vlog_52',
+    videoId: 'UllK3NHnEDg',
+    username: '영양사_브이로그',
+    role: '영양사',
+    location: 'Seoul, Korea',
+    email: 'nutritionist@health.kr',
+    description: '영양사의 하루 일과 공개 🥗🍎',
+    likes: 10500,
+    tags: ['#영양사', '#건강', '#식단']
+  },
+  {
+    id: 'vlog_53',
+    videoId: '2yEZa6aZRFc',
+    username: '반도체_연구원',
+    role: '반도체 연구원',
+    location: 'Gyeonggi, Korea',
+    email: 'semi_researcher@tech.kr',
+    description: '반도체 연구원의 연구 일상 💾🔬',
+    likes: 13200,
+    tags: ['#반도체', '#연구원', '#기술']
+  },
+  {
+    id: 'vlog_54',
+    videoId: '-mVsvCmsudw',
+    username: '기업_연구원',
+    role: '기업 연구원',
+    location: 'Gyeonggi, Korea',
+    email: 'corp_researcher@company.kr',
+    description: '기업 연구소 연구원의 하루 🔬📊',
+    likes: 9100,
+    tags: ['#연구원', '#기업', '#연구소']
+  },
+  {
+    id: 'vlog_55',
+    videoId: '3Il_o2Pv1D4',
+    username: '코스메틱_연구원',
+    role: '화장품 연구원',
+    location: 'Gyeonggi, Korea',
+    email: 'cosmetic_lab@beauty.kr',
+    description: '화장품 연구원의 제품 개발 일상 💄🔬',
+    likes: 11900,
+    tags: ['#화장품', '#연구원', '#뷰티']
+  },
+  {
+    id: 'vlog_56',
+    videoId: '805G5c85sbc',
+    username: 'IT기업_직원',
+    role: 'IT 기업 직원',
+    location: 'Seoul, Korea',
+    email: 'it_corp@tech.kr',
+    description: 'IT 기업에서 일하는 직원의 브이로그 💻🌐',
+    likes: 14800,
+    tags: ['#IT기업', '#회사생활', '#기술']
+  },
+  {
+    id: 'vlog_57',
+    videoId: 'h0o5WNCP_qI',
+    username: '스타트업_직원',
+    role: '스타트업 직원',
+    location: 'Seoul, Korea',
+    email: 'startup@venture.kr',
+    description: '스타트업에서 일하는 직원의 하루 🚀💡',
+    likes: 13500,
+    tags: ['#스타트업', '#벤처', '#회사']
+  },
+  {
+    id: 'vlog_58',
+    videoId: 'IYhQyn5h7wI',
+    username: '게임회사_디자이너',
+    role: '게임 디자이너',
+    location: 'Seoul, Korea',
+    email: 'game_designer@game.kr',
+    description: '게임회사 디자이너의 작업 브이로그 🎮🎨',
+    likes: 15200,
+    tags: ['#게임', '#디자이너', '#게임회사']
+  },
+  {
+    id: 'vlog_59',
+    videoId: '3w_hzaCiAXY',
+    username: '엔터_홍보팀',
+    role: '엔터 홍보팀',
+    location: 'Seoul, Korea',
+    email: 'ent_pr@entertainment.kr',
+    description: '엔터테인먼트 홍보팀의 하루 🎭✨',
+    likes: 16700,
+    tags: ['#엔터', '#홍보', '#연예']
+  },
+  {
+    id: 'vlog_60',
+    videoId: 'DtQpKkaqLjw',
+    username: '웨딩플래너_브이로그',
+    role: '웨딩플래너',
+    location: 'Seoul, Korea',
+    email: 'wedding@planner.kr',
+    description: '웨딩플래너의 결혼식 준비 브이로그 💒💐',
+    likes: 12800,
+    tags: ['#웨딩플래너', '#결혼식', '#이벤트']
+  },
+  {
+    id: 'vlog_61',
+    videoId: '5WwwVt3KMTU',
+    username: '그래픽_디자이너',
+    role: '그래픽 디자이너',
+    location: 'Seoul, Korea',
+    email: 'graphic@design.kr',
+    description: '그래픽 디자이너의 작업 일상 🎨💻',
+    likes: 11400,
+    tags: ['#디자이너', '#그래픽', '#디자인']
+  },
+  {
+    id: 'vlog_62',
+    videoId: 'WTR4HurnQW4',
+    username: '품질관리_담당자',
+    role: '품질관리 담당자',
+    location: 'Gyeonggi, Korea',
+    email: 'qc@manufacturing.kr',
+    description: '품질관리 담당자의 하루 업무 ✅📊',
+    likes: 8200,
+    tags: ['#품질관리', '#QC', '#제조']
+  },
+  {
+    id: 'vlog_63',
+    videoId: 'YlFLRD7I3Tg',
+    username: 'QA_담당자',
+    role: 'QA 담당자',
+    location: 'Seoul, Korea',
+    email: 'qa@company.kr',
+    description: 'QA 담당자의 테스트 업무 브이로그 🔍✅',
+    likes: 9600,
+    tags: ['#QA', '#품질', '#테스트']
+  },
+  {
+    id: 'vlog_64',
+    videoId: 'mlW9zNr5OIc',
+    username: '생산관리_담당자',
+    role: '생산관리 담당자',
+    location: 'Gyeonggi, Korea',
+    email: 'production@factory.kr',
+    description: '생산관리 담당자의 공장 일상 🏭📋',
+    likes: 7800,
+    tags: ['#생산관리', '#공장', '#제조']
+  },
+  {
+    id: 'vlog_65',
+    videoId: 'dvEqvr-e_2M',
+    username: '영업_담당자',
+    role: '영업 담당자',
+    location: 'Seoul, Korea',
+    email: 'sales@company.kr',
+    description: '영업 담당자의 고객 미팅 브이로그 💼🤝',
+    likes: 10200,
+    tags: ['#영업', '#세일즈', '#비즈니스']
+  },
+  {
+    id: 'vlog_66',
+    videoId: 'AKs5YA1kuDE',
+    username: '전략기획팀_직원',
+    role: '전략기획팀',
+    location: 'Seoul, Korea',
+    email: 'strategy_plan@corp.kr',
+    description: '전략기획팀의 업무 일상 📊💡',
+    likes: 11700,
+    tags: ['#전략기획', '#기획', '#경영']
+  },
+  {
+    id: 'vlog_67',
+    videoId: 'cT4mPmpNcPM',
+    username: '광고대행사_직원',
+    role: '광고대행사 직원',
+    location: 'Seoul, Korea',
+    email: 'ad_agent@agency.kr',
+    description: '광고대행사에서 일하는 직원의 하루 📺💼',
+    likes: 12500,
+    tags: ['#광고', '#광고대행사', '#에이전시']
+  },
+  {
+    id: 'vlog_68',
+    videoId: 'fQDD112dFZo',
+    username: '미디어_기획자',
+    role: '미디어 기획자',
+    location: 'Seoul, Korea',
+    email: 'media_plan@agency.kr',
+    description: '미디어 기획자의 캠페인 준비 브이로그 📱📊',
+    likes: 9900,
+    tags: ['#미디어', '#기획', '#광고']
+  },
+  {
+    id: 'vlog_69',
+    videoId: '9IiA5QBlpOA',
+    username: '브랜드_마케터',
+    role: '브랜드 마케터',
+    location: 'Seoul, Korea',
+    email: 'brand_mkt@company.kr',
+    description: '브랜드 마케터의 마케팅 일상 🎯✨',
+    likes: 13800,
+    tags: ['#마케터', '#브랜드', '#마케팅']
+  },
+  {
+    id: 'vlog_70',
+    videoId: '0wk0JxBeYFs',
+    username: '디지털_마케터',
+    role: '디지털 마케터',
+    location: 'Seoul, Korea',
+    email: 'digital_mkt@online.kr',
+    description: '디지털 마케터의 온라인 마케팅 브이로그 💻📈',
+    likes: 14500,
+    tags: ['#디지털마케팅', '#온라인', '#마케터']
+  },
+  {
+    id: 'vlog_71',
+    videoId: 'LrwMaeqjg7Y',
+    username: '뷰티브랜드_마케터',
+    role: '뷰티 마케터',
+    location: 'Seoul, Korea',
+    email: 'beauty_brand@cosmetic.kr',
+    description: '뷰티 브랜드 마케터의 하루 💄📊',
+    likes: 12100,
+    tags: ['#뷰티', '#마케터', '#브랜드']
+  },
+  {
+    id: 'vlog_72',
+    videoId: 'sifM7XcI-P4',
+    username: '증권사_직원',
+    role: '증권사 직원',
+    location: 'Seoul, Yeouido',
+    email: 'securities@finance.kr',
+    description: '증권사에서 일하는 직원의 브이로그 📈💼',
+    likes: 10900,
+    tags: ['#증권사', '#금융', '#투자']
+  },
+  {
+    id: 'vlog_73',
+    videoId: 'WVeAqYCnbeA',
+    username: '변리사_브이로그',
+    role: '변리사',
+    location: 'Seoul, Korea',
+    email: 'patent@law.kr',
+    description: '변리사의 특허 업무 브이로그 ⚖️📋',
+    likes: 8700,
+    tags: ['#변리사', '#특허', '#법률']
   }
 ];
 
-export default VLOG_DATA;
+// Fisher-Yates 셔플 알고리즘
+function shuffleArray(array) {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+}
+
+// 랜덤으로 섞인 배열 export
+export default shuffleArray(VLOG_DATA);
