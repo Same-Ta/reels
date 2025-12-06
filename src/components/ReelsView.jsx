@@ -150,9 +150,11 @@ const ReelsView = ({ onClose, onStartChat }) => {
     // 10px 이상 움직였으면 그냥 둠 -> 이벤트가 부모로 버블링되어 스와이프 처리됨
   };
 
-  // 갤럭시에서 발생하는 '유령 클릭' 방지용
+  // PC 클릭 처리 (모바일은 터치 이벤트 사용)
   const handleVideoClick = (e) => {
     e.stopPropagation(); // 클릭 이벤트도 부모에게 전달되지 않게 차단
+    // PC에서는 클릭으로 소리 토글
+    toggleSound();
   };
 
   // [수정된 handleVideoLoad] 로딩 완료 시 실행
@@ -445,9 +447,10 @@ const ReelsView = ({ onClose, onStartChat }) => {
           </div>
 
           {/* 소리 켜기/끄기 오버레이 버튼 */}
-          {/* ★ [수정] touch-pan-y 클래스 제거 - 드래그 먹통 해결 */}
+          {/* ★ touch-auto: 부모의 touch-none을 오버라이드하여 터치 허용 */}
           <div 
-            className="absolute inset-0 z-10 flex items-center justify-center"
+            className="absolute inset-0 z-10 flex items-center justify-center touch-auto"
+            style={{ touchAction: 'auto' }}
             onTouchStart={handleVideoTouchStart}
             onTouchEnd={handleVideoTouchEnd}
             onClick={handleVideoClick}
