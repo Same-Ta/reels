@@ -60,18 +60,29 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const swipeStartY = useRef(0);
   const swipeEndY = useRef(0);
 
-  // [핵심] 영상이 마운트될 때 전역 소리 설정과 강제 동기화
+  // [핵심] 영상이 마운트되거나 바뀔 때 실행
   useEffect(() => {
-    // 미리 렌더링된 영상이라도 현재 전역 변수 값을 따라가게 함
+    // 1. 소리 상태 동기화
     setIsMuted(globalMuteState);
     
-    // 로딩된 iframe에도 즉시 신호 보내기
+    // 2. iframe에 신호 보내기
     if (iframeRef.current) {
-      const command = globalMuteState ? 'mute' : 'unMute';
+      // 소리 설정
+      const muteCommand = globalMuteState ? 'mute' : 'unMute';
       iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: command, args: [] }), 
+        JSON.stringify({ event: 'command', func: muteCommand, args: [] }), 
         '*'
       );
+
+      // ★ [추가] 안전장치: 혹시 로딩이 늦어서 자동재생 안 됐을까봐 0.5초 뒤에 또 재생 명령 보냄
+      setTimeout(() => {
+        if (iframeRef.current) {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+            '*'
+          );
+        }
+      }, 500);
     }
   }, [currentIndex]); // currentIndex가 바뀔 때마다 실행
 
@@ -128,9 +139,16 @@ const ReelsView = ({ onClose, onStartChat }) => {
     e.stopPropagation(); // 클릭 이벤트도 부모에게 전달되지 않게 차단
   };
 
-  // 영상 로딩 완료 시 소리 상태 복원
+  // 영상 로딩 완료 시: 소리 설정 복원 + ★강제 재생 명령★
   const handleVideoLoad = () => {
     if (iframeRef.current) {
+      // ★ [핵심 추가] 로딩 끝나자마자 "재생해!"라고 명령을 보냄 (아이폰 멈춤 방지)
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+        '*'
+      );
+
+      // 기존 소리 설정 적용
       const command = globalMuteState ? 'mute' : 'unMute';
       iframeRef.current.contentWindow.postMessage(
         JSON.stringify({ event: 'command', func: command, args: [] }), 
