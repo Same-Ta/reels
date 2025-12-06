@@ -285,6 +285,9 @@ const ReelsView = ({ onClose, onStartChat }) => {
     // 모달이 열려있으면 터치 이벤트 무시
     if (showChatModal || chatMode) return;
     touchStartY.current = e.touches[0].clientY;
+    // ★ [수정] 터치 시작 시 End 좌표도 같이 초기화
+    // 단순 탭을 했을 때 '이동 거리 0'으로 인식하여 화면이 넘어가지 않음
+    touchEndY.current = e.touches[0].clientY;
   };
 
   const handleTouchMove = (e) => {
@@ -297,6 +300,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
     // 모달이 열려있으면 터치 이벤트 무시
     if (showChatModal || chatMode) return;
     const diff = touchStartY.current - touchEndY.current;
+    // 50px 이상 움직였을 때만 스와이프로 인정 (탭 무시)
     if (Math.abs(diff) > 50) {
       if (diff > 0) goToNext();
       else goToPrev();
@@ -323,7 +327,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
       container.removeEventListener('touchmove', touchMoveHandler);
       container.removeEventListener('touchend', touchEndHandler);
     };
-  }, [showChatModal, chatMode]);
+  }, [showChatModal, chatMode, currentIndex, isTransitioning]);
 
   return (
     <div 
@@ -376,8 +380,9 @@ const ReelsView = ({ onClose, onStartChat }) => {
           </div>
 
           {/* 소리 켜기/끄기 오버레이 버튼 */}
+          {/* ★ [수정] touch-pan-y 클래스 제거 - 드래그 먹통 해결 */}
           <div 
-            className="absolute inset-0 z-10 flex items-center justify-center touch-pan-y"
+            className="absolute inset-0 z-10 flex items-center justify-center"
             onTouchStart={handleVideoTouchStart}
             onTouchEnd={handleVideoTouchEnd}
             onClick={handleVideoClick}
