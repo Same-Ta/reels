@@ -897,9 +897,9 @@ const ReelsView = ({ onClose, onStartChat }) => {
                   {/* 질문 작성 안내 */}
                   <div className="bg-gray-50 p-4 rounded-lg mb-6">
                     <p className="text-pink-500 font-medium mb-2">질문을 구체적으로 작성해 주세요.</p>
-                    <p className="text-gray-500 text-sm">예시. 마케팅 직무로 전환을 고려 중인데, <span className="text-pink-400">비전공자도 가능한지, 어떤 준비가 필요한지, 실제 업무는 어떤 것들이 있는지</span> 구체적으로 알고 싶습니다.</p>
+                    <p className="text-gray-500 text-sm">예시1. 마케팅 직무로 전환을 고려 중인데, <span className="text-pink-400">비전공자도 가능한지, 어떤 준비가 필요한지, 실제 업무는 어떤 것들이 있는지</span> 구체적으로 알고 싶습니다.</p>
                     <br></br>
-                    <p className="text-gray-500 text-sm">예시. IT 스타트업으로 이직을 고민 중인데, <span className="text-pink-400">대기업과 스타트업의 업무 방식 차이는 무엇인지, 커리어 성장 측면에서 어떤 장단점이 있는지</span> 조언을 듣고 싶습니다.</p>
+                    <p className="text-gray-500 text-sm">예시2. IT 스타트업으로 이직을 고민 중인데, <span className="text-pink-400">대기업과 스타트업의 업무 방식 차이는 무엇인지, 커리어 성장 측면에서 어떤 장단점이 있는지</span> 조언을 듣고 싶습니다.</p>
                   </div>
 
                   {/* 고민 한줄 요약 */}
