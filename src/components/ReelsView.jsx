@@ -56,6 +56,21 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
 
+  // [핵심] 영상이 마운트될 때 전역 소리 설정과 강제 동기화
+  useEffect(() => {
+    // 미리 렌더링된 영상이라도 현재 전역 변수 값을 따라가게 함
+    setIsMuted(globalMuteState);
+    
+    // 로딩된 iframe에도 즉시 신호 보내기
+    if (iframeRef.current) {
+      const command = globalMuteState ? 'mute' : 'unMute';
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: command, args: [] }), 
+        '*'
+      );
+    }
+  }, [currentIndex]); // currentIndex가 바뀔 때마다 실행
+
   // 가이드 닫을 때 localStorage에 저장
   const closeGuide = () => {
     setShowGuide(false);
@@ -78,15 +93,16 @@ const ReelsView = ({ onClose, onStartChat }) => {
     );
   };
 
-  // 비디오 터치 시작: 손가락이 닿은 위치 기억
+  // 비디오 터치 시작: 손가락이 닿은 위치 기억 (stopPropagation 제거!)
   const handleVideoTouchStart = (e) => {
+    // 절대 여기서 stopPropagation 금지! (드래그 막힘)
     videoTouchStartRef.current = {
       x: e.touches[0].clientX,
       y: e.touches[0].clientY,
     };
   };
 
-  // 비디오 터치 끝: 손가락을 뗐을 때 이동 거리 계산
+  // 비디오 터치 끝: 손가락을 뺐을 때 이동 거리 계산
   const handleVideoTouchEnd = (e) => {
     const touchEndX = e.changedTouches[0].clientX;
     const touchEndY = e.changedTouches[0].clientY;
@@ -95,23 +111,29 @@ const ReelsView = ({ onClose, onStartChat }) => {
     const distanceX = Math.abs(touchEndX - videoTouchStartRef.current.x);
     const distanceY = Math.abs(touchEndY - videoTouchStartRef.current.y);
 
-    // 10px 미만으로 움직였다면 탭(클릭)으로 판단 -> 소리 토글
+    // 이동 거리가 10px 미만이면 => "이건 탭(클릭)이다!"
     if (distanceX < 10 && distanceY < 10) {
+      // ★ 탭일 때만 이벤트가 부모(슬라이더)로 퍼지는 것을 막습니다.
+      e.stopPropagation();
       toggleSound();
     }
-    // 10px 이상 움직였다면 스크롤(드래그)로 판단 -> 아무것도 안 함
+    // 이동 거리가 10px 이상이면 => "이건 스크롤(드래그)이다!"
+    // 아무것도 하지 않음 (자연스럽게 이벤트가 부모로 전달되어 스크롤 작동)
+  };
+
+  // 갤럭시에서 발생하는 '유령 클릭' 방지용
+  const handleVideoClick = (e) => {
+    e.stopPropagation(); // 클릭 이벤트도 부모에게 전달되지 않게 차단
   };
 
   // 영상 로딩 완료 시 소리 상태 복원
   const handleVideoLoad = () => {
-    // 이미 소리가 켜진 상태라면 로딩 직후 소리 켜기 명령 전송
-    if (!globalMuteState && iframeRef.current) {
-      setTimeout(() => {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
-          '*'
-        );
-      }, 500);
+    if (iframeRef.current) {
+      const command = globalMuteState ? 'mute' : 'unMute';
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: command, args: [] }), 
+        '*'
+      );
     }
   };
 
@@ -355,15 +377,10 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
           {/* 소리 켜기/끄기 오버레이 버튼 */}
           <div 
-            className="absolute inset-0 z-10 flex items-center justify-center"
+            className="absolute inset-0 z-10 flex items-center justify-center touch-pan-y"
             onTouchStart={handleVideoTouchStart}
             onTouchEnd={handleVideoTouchEnd}
-            onClick={(e) => {
-              // PC에서는 드래그 개념이 적으므로 그냥 클릭 처리
-              if (window.matchMedia('(hover: hover)').matches) {
-                toggleSound();
-              }
-            }}
+            onClick={handleVideoClick}
           >
             {isMuted && (
               <div className="bg-black/40 p-5 rounded-full backdrop-blur-sm animate-pulse pointer-events-none flex flex-col items-center">
