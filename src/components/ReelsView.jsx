@@ -48,6 +48,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
   });
   const [guideStep, setGuideStep] = useState(0); // 가이드 단계
   const containerRef = useRef(null);
+  const iframeRef = useRef(null); // iframe 제어를 위한 ref
   const touchStartY = useRef(0);
   const touchEndY = useRef(0);
 
@@ -55,6 +56,30 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const closeGuide = () => {
     setShowGuide(false);
     localStorage.setItem('hasSeenReelsGuide', 'true');
+  };
+
+  // 소리 켜기/끄기 함수 (postMessage 사용)
+  const toggleSound = (e) => {
+    e.stopPropagation(); // 이벤트 전파 막기
+    e.preventDefault(); // 기본 동작 막기
+
+    if (!iframeRef.current) return;
+
+    if (isMuted) {
+      // 소리 켜기
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
+        '*'
+      );
+      setIsMuted(false);
+    } else {
+      // 소리 끄기
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'mute', args: [] }), 
+        '*'
+      );
+      setIsMuted(true);
+    }
   };
 
   // 1:1 대화 클릭 정보 저장
@@ -212,8 +237,8 @@ const ReelsView = ({ onClose, onStartChat }) => {
     if (showChatModal || chatMode) return;
     touchEndY.current = e.touches[0].clientY;
     const diff = Math.abs(touchStartY.current - touchEndY.current);
-    // 드래그가 감지되면(10px 이상 움직임) 기본 스크롤 방지
-    if (diff > 10) {
+    // 드래그가 감지되면(30px 이상 움직임) 기본 스크롤 방지
+    if (diff > 30) {
       e.preventDefault();
     }
   };
@@ -288,10 +313,11 @@ const ReelsView = ({ onClose, onStartChat }) => {
           {/* YouTube iframe - 컨트롤 숨김 */}
           <div className="absolute inset-0 w-full h-full overflow-hidden rounded-xl">
             <iframe 
+              ref={iframeRef}
               key={currentVlog.videoId + currentIndex}
               id={`youtube-player-${currentIndex}`}
               className="absolute inset-0 w-full h-full pointer-events-none"
-              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=${isMuted ? 1 : 0}&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1`}
+              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1&origin=${window.location.origin}`}
               title={currentVlog.username}
               allow="autoplay; encrypted-media"
               allowFullScreen
@@ -303,24 +329,22 @@ const ReelsView = ({ onClose, onStartChat }) => {
             className="absolute inset-0 z-10 flex items-center justify-center"
             onTouchStart={(e) => {
               e.stopPropagation();
-            }}
-            onTouchMove={(e) => {
-              e.stopPropagation();
+              e.preventDefault();
             }}
             onTouchEnd={(e) => {
               e.stopPropagation();
-              setIsMuted(!isMuted);
+              e.preventDefault();
+              toggleSound(e);
             }}
             onClick={(e) => {
-              e.stopPropagation();
-              setIsMuted(!isMuted);
+              toggleSound(e);
             }}
           >
             {isMuted && (
-              <div className="bg-black/50 p-4 rounded-full backdrop-blur-sm animate-pulse pointer-events-none relative">
-                <span className="text-white text-3xl">🔇</span>
-                <span className="absolute bottom-[-25px] left-1/2 -translate-x-1/2 text-white text-xs whitespace-nowrap drop-shadow-lg">
-                  탭하여 소리켜기
+              <div className="bg-black/40 p-5 rounded-full backdrop-blur-sm animate-pulse pointer-events-none flex flex-col items-center">
+                <span className="text-white text-4xl mb-2">🔇</span>
+                <span className="text-white text-xs font-bold drop-shadow-lg whitespace-nowrap">
+                  터치하여 소리 켜기
                 </span>
               </div>
             )}
