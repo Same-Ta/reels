@@ -60,16 +60,16 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const swipeStartY = useRef(0);
   const swipeEndY = useRef(0);
 
-  // [수정된 useEffect] 영상 변경 시 "안전 모드" 실행
+  // [iOS 100% 안전 모드] 영상 변경 시 3단계 재생 로직
   useEffect(() => {
-    // 1. 영상이 바뀌면 일단 무조건 '음소거' 상태라고 가정 (충돌 방지)
-    setIsMuted(true);
+    // 1단계: 로컬 상태 즉시 동기화
+    setIsMuted(globalMuteState);
     
-    // 2. 안전한 재생을 위한 '단계별 명령' 전송
+    // 2단계: 안전한 재생 시퀀스 실행
     const safePlaySequence = async () => {
       if (!iframeRef.current) return;
 
-      // [1단계] 즉시: "소리 끄고 재생해!" (이건 아이폰도 100% 허용함)
+      // [Step 1] 즉시: 무음 + 재생 (iOS 항상 허용)
       iframeRef.current.contentWindow.postMessage(
         JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*'
       );
@@ -77,32 +77,40 @@ const ReelsView = ({ onClose, onStartChat }) => {
         JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
       );
 
-      // [2단계] 0.5초 후: 혹시 재생 안 됐을까봐 한 번 더 찌름
+      // [Step 2] 300ms 후: 빠른 재시도 (네트워크 지연 대응)
       setTimeout(() => {
         if (iframeRef.current) {
           iframeRef.current.contentWindow.postMessage(
             JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
           );
         }
-      }, 500);
+      }, 300);
 
-      // [3단계] 1.0초 후: 소리 설정 적용 (영상이 안정적으로 재생된 후)
-      // ★ 여기가 핵심입니다. 너무 빨리 소리를 켜려고 하면 아이폰이 영상을 멈춥니다.
-      if (!globalMuteState) { // 소리가 켜져야 하는 상황이라면
-        setTimeout(() => {
-          if (iframeRef.current) {
+      // [Step 3] 700ms 후: 추가 재시도 (로딩 안정화)
+      setTimeout(() => {
+        if (iframeRef.current) {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
+          );
+        }
+      }, 700);
+
+      // [Step 4] 1200ms 후: 소리 설정 적용 (완전 안정화 후)
+      setTimeout(() => {
+        if (iframeRef.current) {
+          if (!globalMuteState) {
             setIsMuted(false);
             iframeRef.current.contentWindow.postMessage(
               JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
             );
           }
-        }, 1000); // 1초 뒤에 소리 켬 (안정성 확보)
-      }
+        }
+      }, 1200);
     };
 
     safePlaySequence();
 
-  }, [currentIndex]); // currentIndex가 바뀔 때마다 실행
+  }, [currentIndex]);
 
   // 가이드 닫을 때 localStorage에 저장
   const closeGuide = () => {
@@ -159,31 +167,44 @@ const ReelsView = ({ onClose, onStartChat }) => {
     toggleSound();
   };
 
-  // [수정된 handleVideoLoad] 로딩 완료 시 실행
+  // [iOS 100% 안전] iframe 로딩 완료 시 재생 강제
   const handleVideoLoad = () => {
-    if (iframeRef.current) {
-      // 1. 로딩 되자마자 "일단 무음으로 재생!" (가장 중요)
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*'
-      );
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
-      );
+    if (!iframeRef.current) return;
+    
+    // [Step 1] 즉시: 무음 + 재생 (iOS 보안 정책 통과)
+    iframeRef.current.contentWindow.postMessage(
+      JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*'
+    );
+    iframeRef.current.contentWindow.postMessage(
+      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
+    );
 
-      // 2. 사용자가 소리를 켜둔 상태라면, 1초 뒤에 슬그머니 켬
-      if (!globalMuteState) {
-        setTimeout(() => {
-          if (iframeRef.current) {
-            iframeRef.current.contentWindow.postMessage(
-              JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
-            );
-            // 소리 켜면서 영상이 멈추는 경우를 대비해 재생 명령 한 번 더
-            iframeRef.current.contentWindow.postMessage(
-              JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
-            );
-          }
-        }, 1000);
+    // [Step 2] 500ms 후: 재생 재시도 (iframe 로딩 안정화)
+    setTimeout(() => {
+      if (iframeRef.current) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
+        );
       }
+    }, 500);
+
+    // [Step 3] 1200ms 후: 소리 켜기 (영상이 완전히 안정된 후)
+    if (!globalMuteState) {
+      setTimeout(() => {
+        if (iframeRef.current) {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
+          );
+          // 소리 켜면서 영상 멈춤 방지
+          setTimeout(() => {
+            if (iframeRef.current) {
+              iframeRef.current.contentWindow.postMessage(
+                JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
+              );
+            }
+          }, 100);
+        }
+      }, 1200);
     }
   };
 
