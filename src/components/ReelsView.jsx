@@ -210,6 +210,8 @@ const ReelsView = ({ onClose, onStartChat }) => {
     // 모달이 열려있으면 터치 이벤트 무시
     if (showChatModal || chatMode) return;
     touchEndY.current = e.touches[0].clientY;
+    // 기본 스크롤 방지
+    e.preventDefault();
   };
 
   const handleTouchEnd = () => {
@@ -224,13 +226,30 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
   const currentVlog = shuffledVlogs[currentIndex];
 
+  // 터치 이벤트를 passive: false로 등록
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const touchStartHandler = (e) => handleTouchStart(e);
+    const touchMoveHandler = (e) => handleTouchMove(e);
+    const touchEndHandler = (e) => handleTouchEnd(e);
+
+    container.addEventListener('touchstart', touchStartHandler, { passive: false });
+    container.addEventListener('touchmove', touchMoveHandler, { passive: false });
+    container.addEventListener('touchend', touchEndHandler, { passive: false });
+
+    return () => {
+      container.removeEventListener('touchstart', touchStartHandler);
+      container.removeEventListener('touchmove', touchMoveHandler);
+      container.removeEventListener('touchend', touchEndHandler);
+    };
+  }, [showChatModal, chatMode]);
+
   return (
     <div 
       ref={containerRef}
-      className="absolute inset-0 z-50 bg-black flex flex-col overflow-hidden"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      className="absolute inset-0 z-50 bg-black flex flex-col overflow-hidden touch-none"
     >
       {/* 헤더 */}
       <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-6 z-30 bg-gradient-to-b from-black/80 to-transparent">
@@ -266,10 +285,12 @@ const ReelsView = ({ onClose, onStartChat }) => {
           <div className="absolute inset-0 w-full h-full overflow-hidden rounded-xl">
             <iframe 
               key={currentVlog.videoId + currentIndex}
+              id={`youtube-player-${currentIndex}`}
               className="absolute inset-0 w-full h-full pointer-events-none"
               src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=0&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1`}
               title={currentVlog.username}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; autoplay"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
             />
           </div>
 
@@ -806,8 +827,8 @@ const ReelsView = ({ onClose, onStartChat }) => {
       {/* 템플릿 질문 전체 화면 */}
       {chatMode === 'template' && (
         <div className="absolute inset-0 z-60 bg-white flex flex-col md:flex-row overflow-y-auto">
-          {/* 왼쪽: 멘토 정보 */}
-          <div className="w-full md:w-80 md:min-w-[320px] bg-gray-50 p-8 border-r border-gray-200 flex-shrink-0">
+          {/* 왼쪽: 멘토 정보 - 모바일에서는 위에 표시 */}
+          <div className="w-full md:w-80 md:min-w-[320px] bg-gray-50 p-6 md:p-8 border-b md:border-b-0 md:border-r border-gray-200 flex-shrink-0">
             {/* 프로필 이미지 */}
             <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl mb-4">
               {selectedMentor?.username?.[0]}
@@ -847,8 +868,8 @@ const ReelsView = ({ onClose, onStartChat }) => {
             </div>
           </div>
 
-          {/* 오른쪽: 질문 폼 */}
-          <div className="w-full flex-1 p-8">
+          {/* 오른쪽: 질문 폼 - 모바일에서는 아래에 표시 */}
+          <div className="w-full flex-1 p-6 md:p-8 overflow-y-auto">
             {/* 닫기 버튼 */}
             <button 
               onClick={() => {
