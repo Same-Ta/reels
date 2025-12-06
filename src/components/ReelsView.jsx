@@ -247,7 +247,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
   return (
     <div 
       ref={containerRef}
-      className="absolute inset-0 z-50 bg-black flex flex-col overflow-hidden touch-none"
+      className="absolute inset-0 z-50 bg-black flex flex-col overflow-hidden touch-none h-[100dvh]"
     >
       {/* 헤더 */}
       <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-6 z-30 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
@@ -267,13 +267,10 @@ const ReelsView = ({ onClose, onStartChat }) => {
       </div>
 
       {/* 메인 릴스 컨테이너 */}
-      <div className="flex-1 flex items-center justify-center relative w-full pb-20">
+      <div className="flex-1 flex items-center justify-center relative w-full">
         <div 
-          className="relative mx-auto transition-transform duration-300 ease-out"
+          className="relative w-full h-full mx-auto transition-transform duration-300 ease-out md:max-w-md"
           style={{
-            width: 'min(100vw, calc((100vh - 140px) * 9 / 16))',
-            height: 'calc(100vh - 140px)',
-            maxWidth: '400px',
             transform: isTransitioning ? 'scale(0.95)' : 'scale(1)',
             opacity: isTransitioning ? 0.8 : 1
           }}
@@ -316,8 +313,8 @@ const ReelsView = ({ onClose, onStartChat }) => {
           </div>
 
           {/* 하단 정보 영역 (기존 유지) */}
-          <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none z-20">
-            <div className="pointer-events-auto">
+          <div className="absolute bottom-0 left-0 right-0 p-3 pb-safe bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none z-20">
+            <div className="pointer-events-auto pb-4">
               <div className="flex items-center gap-2 mb-1.5">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm ring-1 ring-white">
                   {currentVlog.username[0]}
