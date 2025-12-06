@@ -60,30 +60,46 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const swipeStartY = useRef(0);
   const swipeEndY = useRef(0);
 
-  // [핵심] 영상이 마운트되거나 바뀔 때 실행
+  // [수정된 useEffect] 영상 변경 시 실행
   useEffect(() => {
-    // 1. 소리 상태 동기화
+    // 1. 일단 전역 변수에서 소리 설정 가져옴
     setIsMuted(globalMuteState);
     
-    // 2. iframe에 신호 보내기
-    if (iframeRef.current) {
-      // 소리 설정
-      const muteCommand = globalMuteState ? 'mute' : 'unMute';
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: muteCommand, args: [] }), 
-        '*'
-      );
-
-      // ★ [추가] 안전장치: 혹시 로딩이 늦어서 자동재생 안 됐을까봐 0.5초 뒤에 또 재생 명령 보냄
-      setTimeout(() => {
-        if (iframeRef.current) {
+    // 2. [아이폰 해결책] "무한 재생 요청" 타이머 시작
+    // 로딩이 늦어지거나 iOS가 막는 것을 뚫기 위해 0.5초마다 "재생해!" 명령을 보냄
+    const forcePlayInterval = setInterval(() => {
+      if (iframeRef.current) {
+        // (1) 재생 명령 전송 (최우선)
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+          '*'
+        );
+        
+        // (2) 소리 설정 전송 (단, 재생 명령보다 늦게 적용되도록 설계됨)
+        // 만약 소리가 켜져야 하는 상황이라면 'unMute'를 보냄
+        if (!globalMuteState) {
           iframeRef.current.contentWindow.postMessage(
-            JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+            JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
+            '*'
+          );
+        } else {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'mute', args: [] }), 
             '*'
           );
         }
-      }, 500);
-    }
+      }
+    }, 500); // 0.5초마다 시도
+
+    // 3. 3초 뒤에는 타이머 종료 (계속 보내면 성능 저하되므로)
+    const clearTimer = setTimeout(() => {
+      clearInterval(forcePlayInterval);
+    }, 3000);
+
+    return () => {
+      clearInterval(forcePlayInterval);
+      clearTimeout(clearTimer);
+    };
   }, [currentIndex]); // currentIndex가 바뀔 때마다 실행
 
   // 가이드 닫을 때 localStorage에 저장
@@ -139,21 +155,33 @@ const ReelsView = ({ onClose, onStartChat }) => {
     e.stopPropagation(); // 클릭 이벤트도 부모에게 전달되지 않게 차단
   };
 
-  // 영상 로딩 완료 시: 소리 설정 복원 + ★강제 재생 명령★
+  // [수정된 handleVideoLoad] 로딩 완료 시 실행
   const handleVideoLoad = () => {
     if (iframeRef.current) {
-      // ★ [핵심 추가] 로딩 끝나자마자 "재생해!"라고 명령을 보냄 (아이폰 멈춤 방지)
+      // 1. [최우선] 무조건 "재생(playVideo)" 명령부터 보냄
       iframeRef.current.contentWindow.postMessage(
         JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
         '*'
       );
 
-      // 기존 소리 설정 적용
-      const command = globalMuteState ? 'mute' : 'unMute';
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: command, args: [] }), 
-        '*'
-      );
+      // 2. 소리 설정은 약간의 딜레이를 두고 적용
+      // 이유: 아이폰에서 로딩 직후 소리 켜기를 시도하면 영상이 멈출 수 있음
+      if (!globalMuteState) {
+        setTimeout(() => {
+          if (iframeRef.current) {
+            iframeRef.current.contentWindow.postMessage(
+              JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
+              '*'
+            );
+          }
+        }, 800); // 0.8초 뒤에 소리 켜기 (안전하게)
+      } else {
+        // 소리 꺼진 상태면 바로 적용해도 됨
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'mute', args: [] }), 
+          '*'
+        );
+      }
     }
   };
 
