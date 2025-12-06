@@ -394,9 +394,11 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
   return (
     <div 
-  return (
-    <div 
       ref={containerRef}
+      // ★ [중요] touch-none: 브라우저 기본 터치 액션(스크롤, 새로고침 등) 완전 차단
+      className="absolute inset-0 z-50 bg-black flex flex-col overflow-hidden touch-none"
+      style={{ touchAction: 'none' }}
+    >
       {/* 헤더 */}
       <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-6 z-30 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
         <h2 className="text-white font-bold text-lg flex items-center gap-2 pointer-events-auto">
@@ -411,8 +413,6 @@ const ReelsView = ({ onClose, onStartChat }) => {
           className="p-2 hover:bg-white/10 rounded-full text-white transition pointer-events-auto"
         >
           <X size={24} />
-        </button>
-      </div> size={24} />
         </button>
       </div>
 
