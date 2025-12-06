@@ -826,51 +826,9 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
       {/* 템플릿 질문 전체 화면 */}
       {chatMode === 'template' && (
-        <div className="absolute inset-0 z-60 bg-white flex flex-col md:flex-row overflow-y-auto">
-          {/* 왼쪽: 멘토 정보 - 모바일에서는 위에 표시 */}
-          <div className="w-full md:w-80 md:min-w-[320px] bg-gray-50 p-6 md:p-8 border-b md:border-b-0 md:border-r border-gray-200 flex-shrink-0">
-            {/* 프로필 이미지 */}
-            <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl mb-4">
-              {selectedMentor?.username?.[0]}
-            </div>
-
-            {/* 카테고리 */}
-            <p className="text-gray-500 text-sm mb-1">{selectedMentor?.tags?.[0]?.replace('#', '')}</p>
-            
-            {/* 이름 + 신규 멘토 뱃지 */}
-            <div className="flex items-center gap-2 mb-2">
-              <h2 className="text-gray-900 font-bold text-xl">{selectedMentor?.username?.replace('_', ' ')}</h2>
-              <span className="bg-pink-500 text-white text-xs px-2 py-0.5 rounded">신규 멘토</span>
-            </div>
-
-            {/* 회사/직무 */}
-            <p className="text-blue-600 text-sm mb-4">{selectedMentor?.role}</p>
-
-            {/* 자기소개 */}
-            <div className="text-gray-700 text-sm leading-relaxed space-y-3">
-              <p>안녕하세요!</p>
-              <p>{selectedMentor?.description}</p>
-              <p>커리어, 직무 고민에 대한 해답을 진짜 현직자에게 받아보세요.</p>
-              <p>짧지만 여러 회사를 밀도있게 다녀본 경험이 궁금하시다면!</p>
-              <p className="text-blue-600 underline cursor-pointer">질문을 남겨주세요~</p>
-              <p className="text-gray-400 text-xs cursor-pointer">더보기</p>
-            </div>
-
-            {/* 태그들 */}
-            <div className="flex flex-wrap gap-2 mt-6">
-              {currentVlog.tags.map(tag => (
-                <span key={tag} className="text-gray-500 text-sm">{tag}</span>
-              ))}
-              <span className="text-gray-500 text-sm">#면접</span>
-              <span className="text-gray-500 text-sm">#이직</span>
-              <span className="text-gray-500 text-sm">#해외취업</span>
-              <span className="text-gray-500 text-sm">#자소서</span>
-            </div>
-          </div>
-
-          {/* 오른쪽: 질문 폼 - 모바일에서는 아래에 표시 */}
-          <div className="w-full flex-1 p-6 md:p-8 overflow-y-auto">
-            {/* 닫기 버튼 */}
+        <div className="absolute inset-0 z-60 bg-white overflow-y-auto">
+          <div className="flex flex-col md:flex-row min-h-full">
+            {/* 닫기 버튼 - 최상단 고정 */}
             <button 
               onClick={() => {
                 setChatMode(null);
@@ -880,166 +838,208 @@ const ReelsView = ({ onClose, onStartChat }) => {
                 setQuestionDetail('');
                 setEmail('');
               }}
-              className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full"
+              className="fixed top-4 right-4 p-2 hover:bg-gray-100 rounded-full z-10 bg-white shadow-md"
             >
               <X size={24} className="text-gray-500" />
             </button>
 
-            {templateStep === 1 && (
-              <>
-                <h1 className="text-gray-900 font-bold text-2xl mb-2">멘토에게 질문하기</h1>
-                <p className="text-gray-500 text-sm mb-6">
-                  OOO님 고민이 있나요?<br/>
-                  커리어, 직무 고민에 대한 해답을 진짜 현직자에게 받아보세요.
-                </p>
+            {/* 왼쪽: 멘토 정보 - 모바일에서는 위에 표시 */}
+            <div className="w-full md:w-80 md:min-w-[320px] bg-gray-50 p-6 md:p-8 border-b md:border-b-0 md:border-r border-gray-200 flex-shrink-0">
+              {/* 프로필 이미지 */}
+              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl mb-4">
+                {selectedMentor?.username?.[0]}
+              </div>
 
-                {/* 질문 작성 안내 */}
-                <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                  <p className="text-pink-500 font-medium mb-2">질문을 구체적으로 작성해 주세요.</p>
-                  <p className="text-gray-500 text-sm">예시. 마케팅 직무로 전환을 고려 중인데, <span className="text-pink-400">비전공자도 가능한지, 어떤 준비가 필요한지, 실제 업무는 어떤 것들이 있는지</span> 구체적으로 알고 싶습니다.</p>
-                  <p className="text-gray-500 text-sm">예시. IT 스타트업으로 이직을 고민 중인데, <span className="text-pink-400">대기업과 스타트업의 업무 방식 차이는 무엇인지, 커리어 성장 측면에서 어떤 장단점이 있는지</span> 조언을 듣고 싶습니다.</p>
-                </div>
+              {/* 카테고리 */}
+              <p className="text-gray-500 text-sm mb-1">{selectedMentor?.tags?.[0]?.replace('#', '')}</p>
+              
+              {/* 이름 + 신규 멘토 뱃지 */}
+              <div className="flex items-center gap-2 mb-2">
+                <h2 className="text-gray-900 font-bold text-xl">{selectedMentor?.username?.replace('_', ' ')}</h2>
+                <span className="bg-pink-500 text-white text-xs px-2 py-0.5 rounded">신규 멘토</span>
+              </div>
 
-                {/* 고민 한줄 요약 */}
-                <div className="mb-4">
-                  <label className="text-gray-700 text-sm block mb-2">제목(고민 한줄 요약)</label>
-                  <input 
-                    type="text"
-                    value={questionSummary}
-                    onChange={(e) => setQuestionSummary(e.target.value)}
-                    placeholder="고민을 한 줄로 요약해주세요"
-                    className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-pink-500"
-                  />
-                </div>
+              {/* 회사/직무 */}
+              <p className="text-blue-600 text-sm mb-4">{selectedMentor?.role}</p>
 
-                {/* 질문 내용 안내 */}
-                <div className="bg-gray-50 p-4 rounded-lg mb-4 text-sm">
-                  <p className="text-gray-700 font-medium mb-2">질문 내용은 콘텐츠 소재로 사용될 수 있습니다.</p>
-                  <p className="text-gray-500">- 오다 콘텐츠는 실제 질문/답변 중 우수 사례를 편집하여 발행합니다.</p>
-                  <p className="text-gray-500">- 개인 정보는 콘텐츠 검수 과정에서 안전하게 삭제됩니다.</p>
-                </div>
+              {/* 자기소개 */}
+              <div className="text-gray-700 text-sm leading-relaxed space-y-3">
+                <p>안녕하세요!</p>
+                <p>{selectedMentor?.description}</p>
+                <p>커리어, 직무 고민에 대한 해답을 진짜 현직자에게 받아보세요.</p>
+                <p>짧지만 여러 회사를 밀도있게 다녀본 경험이 궁금하시다면!</p>
+                <p className="text-blue-600 underline cursor-pointer">질문을 남겨주세요~</p>
+                <p className="text-gray-400 text-xs cursor-pointer">더보기</p>
+              </div>
 
-                {/* 서비스 취지 안내 */}
-                <div className="mb-4 text-sm">
-                  <p className="text-gray-700 font-medium mb-2">서비스 취지에 맞지 않는 질문을 남길 경우 이용이 제한될 수 있습니다.</p>
-                  <p className="text-gray-500">- 과제를 목적으로 하는 인터뷰 요청</p>
-                  <p className="text-gray-500">- 외부 프로그램 섭외 요청</p>
-                  <p className="text-gray-500">- 사적 표현 등 관련없는 질문</p>
-                </div>
+              {/* 태그들 */}
+              <div className="flex flex-wrap gap-2 mt-6">
+                {currentVlog.tags.map(tag => (
+                  <span key={tag} className="text-gray-500 text-sm">{tag}</span>
+                ))}
+                <span className="text-gray-500 text-sm">#면접</span>
+                <span className="text-gray-500 text-sm">#이직</span>
+                <span className="text-gray-500 text-sm">#해외취업</span>
+                <span className="text-gray-500 text-sm">#자소서</span>
+              </div>
+            </div>
 
-                <p className="text-gray-500 text-sm mb-4">
-                  자세한 <span className="text-blue-600 underline cursor-pointer">내용은</span> 질문하기 <span className="text-blue-600 underline cursor-pointer">이용방법</span>을 확인해 주세요.
-                </p>
+            {/* 오른쪽: 질문 폼 - 모바일에서는 아래에 표시 */}
+            <div className="w-full flex-1 p-6 md:p-8 pb-12">
+              {templateStep === 1 && (
+                <>
+                  <h1 className="text-gray-900 font-bold text-2xl mb-2">멘토에게 질문하기</h1>
+                  <p className="text-gray-500 text-sm mb-6">
+                    OOO님 고민이 있나요?<br/>
+                    커리어, 직무 고민에 대한 해답을 진짜 현직자에게 받아보세요.
+                  </p>
 
-                {/* 질문 작성 */}
-                <div className="mb-6">
-                  <textarea 
-                    value={questionDetail}
-                    onChange={(e) => setQuestionDetail(e.target.value)}
-                    placeholder="질문을 작성해주세요.."
-                    rows={5}
-                    className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-pink-500 resize-none"
-                  />
-                </div>
-
-                {/* 전송하기 버튼 */}
-                <button 
-                  onClick={() => {
-                    if (questionSummary.trim() && questionDetail.trim()) {
-                      setTemplateStep(2);
-                    }
-                  }}
-                  disabled={!questionSummary.trim() || !questionDetail.trim()}
-                  className="w-full py-4 bg-pink-500 hover:bg-pink-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all"
-                >
-                  전송하기
-                </button>
-              </>
-            )}
-
-            {templateStep === 2 && (
-              <>
-                <button 
-                  onClick={() => setTemplateStep(1)}
-                  className="flex items-center gap-2 text-gray-500 mb-6 hover:text-gray-700"
-                >
-                  <ArrowLeft size={20} />
-                  <span>뒤로</span>
-                </button>
-
-                <div className="text-center py-8">
-                  <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
-                    <Send size={36} className="text-green-500" />
+                  {/* 질문 작성 안내 */}
+                  <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                    <p className="text-pink-500 font-medium mb-2">질문을 구체적으로 작성해 주세요.</p>
+                    <p className="text-gray-500 text-sm">예시. 마케팅 직무로 전환을 고려 중인데, <span className="text-pink-400">비전공자도 가능한지, 어떤 준비가 필요한지, 실제 업무는 어떤 것들이 있는지</span> 구체적으로 알고 싶습니다.</p>
+                    <p className="text-gray-500 text-sm">예시. IT 스타트업으로 이직을 고민 중인데, <span className="text-pink-400">대기업과 스타트업의 업무 방식 차이는 무엇인지, 커리어 성장 측면에서 어떤 장단점이 있는지</span> 조언을 듣고 싶습니다.</p>
                   </div>
-                  <h2 className="text-gray-900 font-bold text-xl mb-2">질문이 전송될 준비가 되었어요!</h2>
-                  <p className="text-gray-500 text-sm mb-8">답변이 도착하면 알림을 받을 이메일 주소를 입력해주세요.</p>
 
-                  <div className="max-w-xs mx-auto mb-6">
-                    <label className="text-gray-700 text-sm block mb-2 text-left">이메일 주소</label>
+                  {/* 고민 한줄 요약 */}
+                  <div className="mb-4">
+                    <label className="text-gray-700 text-sm block mb-2">제목(고민 한줄 요약)</label>
                     <input 
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="example@email.com"
-                      className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-pink-500 text-center"
+                      type="text"
+                      value={questionSummary}
+                      onChange={(e) => setQuestionSummary(e.target.value)}
+                      placeholder="고민을 한 줄로 요약해주세요"
+                      className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-pink-500"
                     />
                   </div>
 
-                  <p className="text-gray-400 text-sm mb-8">
-                    입력하신 이메일로 멘토의 답변 알림이 발송됩니다.
+                  {/* 질문 내용 안내 */}
+                  <div className="bg-gray-50 p-4 rounded-lg mb-4 text-sm">
+                    <p className="text-gray-700 font-medium mb-2">질문 내용은 콘텐츠 소재로 사용될 수 있습니다.</p>
+                    <p className="text-gray-500">- 오다 콘텐츠는 실제 질문/답변 중 우수 사례를 편집하여 발행합니다.</p>
+                    <p className="text-gray-500">- 개인 정보는 콘텐츠 검수 과정에서 안전하게 삭제됩니다.</p>
+                  </div>
+
+                  {/* 서비스 취지 안내 */}
+                  <div className="mb-4 text-sm">
+                    <p className="text-gray-700 font-medium mb-2">서비스 취지에 맞지 않는 질문을 남길 경우 이용이 제한될 수 있습니다.</p>
+                    <p className="text-gray-500">- 과제를 목적으로 하는 인터뷰 요청</p>
+                    <p className="text-gray-500">- 외부 프로그램 섭외 요청</p>
+                    <p className="text-gray-500">- 사적 표현 등 관련없는 질문</p>
+                  </div>
+
+                  <p className="text-gray-500 text-sm mb-4">
+                    자세한 <span className="text-blue-600 underline cursor-pointer">내용은</span> 질문하기 <span className="text-blue-600 underline cursor-pointer">이용방법</span>을 확인해 주세요.
                   </p>
 
+                  {/* 질문 작성 */}
+                  <div className="mb-6">
+                    <textarea 
+                      value={questionDetail}
+                      onChange={(e) => setQuestionDetail(e.target.value)}
+                      placeholder="질문을 작성해주세요.."
+                      rows={5}
+                      className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-pink-500 resize-none"
+                    />
+                  </div>
+
+                  {/* 전송하기 버튼 */}
                   <button 
-                    onClick={async () => {
-                      if (email.includes('@') && email.includes('.')) {
-                        await saveTemplateQuestion();
-                        setTemplateStep(3);
+                    onClick={() => {
+                      if (questionSummary.trim() && questionDetail.trim()) {
+                        setTemplateStep(2);
                       }
                     }}
-                    disabled={!email.includes('@') || !email.includes('.')}
-                    className="w-full max-w-xs py-4 bg-pink-500 hover:bg-pink-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all mx-auto"
+                    disabled={!questionSummary.trim() || !questionDetail.trim()}
+                    className="w-full py-4 bg-pink-500 hover:bg-pink-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all"
                   >
-                    질문 전송하기
+                    전송하기
                   </button>
-                </div>
-              </>
-            )}
+                </>
+              )}
 
-            {templateStep === 3 && (
-              <div className="text-center py-16">
-                <div className="w-24 h-24 rounded-full bg-green-500 flex items-center justify-center mx-auto mb-6">
-                  <Check size={48} className="text-white" />
-                </div>
-                <h2 className="text-gray-900 font-bold text-2xl mb-4">질문이 전송되었습니다!</h2>
-                <p className="text-gray-500 mb-2">
-                  {selectedMentor?.username?.replace('_', ' ')}님이 답변을 작성하면
-                </p>
-                <p className="text-gray-700 font-medium mb-6">
-                  {email}로 알림을 보내드려요.
-                </p>
-                <p className="text-gray-400 text-sm mb-8">
-                  보통 1~3일 내에 답변이 도착합니다.
-                </p>
-                <button 
-                  onClick={() => {
-                    setShowChatModal(false);
-                    setChatMode(null);
-                    setTemplateStep(1);
-                    setQuestionSummary('');
-                    setQuestionDetail('');
-                    setEmail('');
-                  }}
-                  className="px-12 py-4 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg transition-all"
-                >
-                  확인
-                </button>
-              </div>
-            )}
+              {templateStep === 2 && (
+                <>
+                  <button 
+                    onClick={() => setTemplateStep(1)}
+                    className="flex items-center gap-2 text-gray-500 mb-6 hover:text-gray-700"
+                  >
+                    <ArrowLeft size={20} />
+                    <span>뒤로</span>
+                  </button>
+
+                  <div className="text-center py-8">
+                    <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
+                      <Send size={36} className="text-green-500" />
+                    </div>
+                    <h2 className="text-gray-900 font-bold text-xl mb-2">질문이 전송될 준비가 되었어요!</h2>
+                    <p className="text-gray-500 text-sm mb-8">답변이 도착하면 알림을 받을 이메일 주소를 입력해주세요.</p>
+
+                    <div className="max-w-xs mx-auto mb-6">
+                      <label className="text-gray-700 text-sm block mb-2 text-left">이메일 주소</label>
+                      <input 
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="example@email.com"
+                        className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-pink-500 text-center"
+                      />
+                    </div>
+
+                    <p className="text-gray-400 text-sm mb-8">
+                      입력하신 이메일로 멘토의 답변 알림이 발송됩니다.
+                    </p>
+
+                    <button 
+                      onClick={async () => {
+                        if (email.includes('@') && email.includes('.')) {
+                          await saveTemplateQuestion();
+                          setTemplateStep(3);
+                        }
+                      }}
+                      disabled={!email.includes('@') || !email.includes('.')}
+                      className="w-full max-w-xs py-4 bg-pink-500 hover:bg-pink-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all mx-auto"
+                    >
+                      질문 전송하기
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {templateStep === 3 && (
+                <>
+                  <div className="w-24 h-24 rounded-full bg-green-500 flex items-center justify-center mx-auto mb-6 mt-16">
+                    <Check size={48} className="text-white" />
+                  </div>
+                  <h2 className="text-gray-900 font-bold text-2xl mb-4">질문이 전송되었습니다!</h2>
+                  <p className="text-gray-500 mb-2">
+                    {selectedMentor?.username?.replace('_', ' ')}님이 답변을 작성하면
+                  </p>
+                  <p className="text-gray-700 font-medium mb-6">
+                    {email}로 알림을 보내드려요.
+                  </p>
+                  <p className="text-gray-400 text-sm mb-8">
+                    보통 1~3일 내에 답변이 도착합니다.
+                  </p>
+                  <button 
+                    onClick={() => {
+                      setShowChatModal(false);
+                      setChatMode(null);
+                      setTemplateStep(1);
+                      setQuestionSummary('');
+                      setQuestionDetail('');
+                      setEmail('');
+                    }}
+                    className="px-12 py-4 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg transition-all"
+                  >
+                    확인
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         </div>
-      )}
-
-      {/* 가이드라인 모달 */}
+      )}      {/* 가이드라인 모달 */}
       {showGuide && (
         <div className="fixed inset-0 z-[200] bg-black/70 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
