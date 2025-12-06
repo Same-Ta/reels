@@ -71,26 +71,35 @@ const ReelsView = ({ onClose, onStartChat }) => {
     localStorage.setItem('hasSeenReelsGuide', 'true');
   };
 
-  // [소리 토글] 사용자가 화면을 탭했을 때 실행
+  // [수정된 소리 토글 함수] 갤럭시 멈춤 현상 해결
   const toggleSound = () => {
     if (!iframeRef.current) return;
     
-    // 상태 뒤집기
+    // 1. 상태 업데이트
     const wantSound = !globalSoundOn;
     globalSoundOn = wantSound; // 전역 변수 업데이트
     setIsMuted(!wantSound);    // UI 업데이트
     
-    // 명령어 전송
+    // 2. 명령어 전송 (순차 처리)
+    // 갤럭시에서는 소리 명령과 재생 명령이 동시에 들어가면 충돌하여 멈출 수 있음.
+    
+    // (1) 먼저 소리 설정 명령을 보냄
     const command = wantSound ? 'unMute' : 'mute';
     iframeRef.current.contentWindow.postMessage(
       JSON.stringify({ event: 'command', func: command, args: [] }), 
       '*'
     );
-    // 소리 켜면서 재생도 확실하게 (멈춤 방지)
-    iframeRef.current.contentWindow.postMessage(
-      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
-      '*'
-    );
+
+    // (2) [핵심] 아주 짧은 딜레이 후 재생 명령 전송
+    // 소리 설정이 적용될 시간을 줌 (50ms ~ 100ms)
+    setTimeout(() => {
+      if (iframeRef.current) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+          '*'
+        );
+      }
+    }, 100);
   };
 
   // ---------------------------------------------------------
