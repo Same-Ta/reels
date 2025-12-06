@@ -340,44 +340,42 @@ const ReelsView = ({ onClose, onStartChat }) => {
                 ))}
               </div>
 
-              <button 
-                onTouchEnd={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedMentor(currentVlog);
-                  setChatMode('select');
-                }}
-                className="w-full py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-lg active:scale-95 text-xs touch-manipulation"
-                style={{ WebkitTapHighlightColor: 'transparent' }}
-              >
-                <MessageCircle size={16} />
-                이 직무에 대해 질문하기
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onTouchEnd={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedMentor(currentVlog);
+                    setChatMode('select');
+                  }}
+                  className="flex-1 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-lg active:scale-95 text-xs touch-manipulation"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                  <MessageCircle size={16} />
+                  이 직무에 대해 질문하기
+                </button>
+                <button 
+                  onTouchEnd={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                      e.stopPropagation();
+                      toggleInterest(currentVlog.id);
+                  }}
+                  className={`px-4 py-2 rounded-lg transition-all active:scale-95 backdrop-blur-sm flex items-center gap-1.5 text-xs font-bold shadow-lg ${
+                    interested[currentVlog.id] 
+                      ? 'bg-yellow-400 text-gray-900' 
+                      : 'bg-black/40 text-white hover:bg-black/60'
+                  }`}
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                  {interested[currentVlog.id] ? (
+                    <CheckCircle2 size={16} />
+                  ) : (
+                    <Bookmark size={16} />
+                  )}
+                  {interested[currentVlog.id] ? '저장됨' : '저장'}
+                </button>
+              </div>
             </div>
-          </div>
-
-          <div className="absolute right-4 top-4 z-40 pointer-events-auto">
-            <button 
-              onTouchEnd={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                  e.stopPropagation();
-                  toggleInterest(currentVlog.id);
-              }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all active:scale-95 backdrop-blur-sm ${
-                interested[currentVlog.id] 
-                  ? 'bg-yellow-400 text-gray-900' 
-                  : 'bg-black/40 text-white hover:bg-black/60'
-              }`}
-            >
-              {interested[currentVlog.id] ? (
-                <CheckCircle2 size={18} />
-              ) : (
-                <Bookmark size={18} />
-              )}
-              <span className="text-sm font-medium">
-                {interested[currentVlog.id] ? '저장됨' : '저장'}
-              </span>
-            </button>
           </div>
         </div>
       </div>
