@@ -69,22 +69,6 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const closeGuide = () => {
     setShowGuide(false);
     localStorage.setItem('hasSeenReelsGuide', 'true');
-    
-    // 가이드 종료 시 음소거 해제 (사용자 상호작용으로 인한 자동 unmute)
-    globalSoundOn = true;
-    setIsMuted(false);
-    
-    // iframe이 있으면 즉시 음소거 해제 및 재생
-    if (iframeRef.current) {
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
-        '*'
-      );
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
-        '*'
-      );
-    }
   };
 
   // [소리 토글] 사용자가 화면을 탭했을 때 실행
@@ -356,45 +340,44 @@ const ReelsView = ({ onClose, onStartChat }) => {
                 ))}
               </div>
 
-              <button 
-                onTouchEnd={(e) => e.stopPropagation()}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setSelectedMentor(currentVlog);
-                  setChatMode('select');
-                }}
-                className="w-full py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-lg active:scale-95 text-xs touch-manipulation"
-                style={{ WebkitTapHighlightColor: 'transparent' }}
-              >
-                <MessageCircle size={16} />
-                이 직무에 대해 질문하기
-              </button>
+              <div className="flex gap-2">
+                <button 
+                  onTouchEnd={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedMentor(currentVlog);
+                    setChatMode('select');
+                  }}
+                  className="flex-1 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-lg active:scale-95 text-xs touch-manipulation"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                  <MessageCircle size={16} />
+                  이 직무에 대해 질문하기
+                </button>
+                <button 
+                  onTouchEnd={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                      e.stopPropagation();
+                      toggleInterest(currentVlog.id);
+                  }}
+                  className={`px-4 py-2 rounded-lg transition-all active:scale-95 backdrop-blur-sm flex items-center gap-1.5 text-xs font-bold shadow-lg ${
+                    interested[currentVlog.id] 
+                      ? 'bg-yellow-400 text-gray-900' 
+                      : 'bg-black/40 text-white hover:bg-black/60'
+                  }`}
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                >
+                  {interested[currentVlog.id] ? (
+                    <CheckCircle2 size={16} />
+                  ) : (
+                    <Bookmark size={16} />
+                  )}
+                  {interested[currentVlog.id] ? '저장됨' : '저장'}
+                </button>
+              </div>
             </div>
           </div>
 
-          <div className="absolute right-4 top-4 z-40 pointer-events-auto">
-            <button 
-              onTouchEnd={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                  e.stopPropagation();
-                  toggleInterest(currentVlog.id);
-              }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full transition-all active:scale-95 backdrop-blur-sm ${
-                interested[currentVlog.id] 
-                  ? 'bg-yellow-400 text-gray-900' 
-                  : 'bg-black/40 text-white hover:bg-black/60'
-              }`}
-            >
-              {interested[currentVlog.id] ? (
-                <CheckCircle2 size={18} />
-              ) : (
-                <Bookmark size={18} />
-              )}
-              <span className="text-sm font-medium">
-                {interested[currentVlog.id] ? '저장됨' : '저장'}
-              </span>
-            </button>
-          </div>
         </div>
       </div>
 
@@ -787,20 +770,10 @@ const ReelsView = ({ onClose, onStartChat }) => {
                   <Check size={40} className="text-white" />
                 </div>
                 <h3 className="text-gray-900 font-bold text-xl mb-2">결제가 완료되었습니다!</h3>
-                <p className="text-gray-500 mb-6">
-                  {selectedMentor?.username}님과의 1:1 대화가 예약되었습니다.<br/>
+                <p className="text-gray-500">
+                  재생에너지 엔지니어님과의 1:1 대화가 예약되었습니다.<br/>
                   멘토가 확인 후 연락드릴 예정입니다.
                 </p>
-                <button 
-                  onClick={() => {
-                    setChatMode(null);
-                    setPaymentStep(1);
-                    onStartChat(selectedMentor);
-                  }}
-                  className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold rounded-lg transition-all"
-                >
-                  채팅 시작하기
-                </button>
               </div>
             </div>
           )}
@@ -1132,7 +1105,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
                         <Bookmark size={18} className="text-yellow-600" />
                       </div>
                       <p className="text-gray-700 text-sm">
-                        좌측 상단의 <span className="font-semibold">저장 버튼</span>을 눌러 관심 직업을 저장해요
+                        우측 상단의 <span className="font-semibold">저장 버튼</span>을 눌러 관심 직업을 저장해요
                       </p>
                     </div>
                   </div>
