@@ -787,10 +787,20 @@ const ReelsView = ({ onClose, onStartChat }) => {
                   <Check size={40} className="text-white" />
                 </div>
                 <h3 className="text-gray-900 font-bold text-xl mb-2">결제가 완료되었습니다!</h3>
-                <p className="text-gray-500">
-                  재생에너지 엔지니어님과의 1:1 대화가 예약되었습니다.<br/>
+                <p className="text-gray-500 mb-6">
+                  {selectedMentor?.username}님과의 1:1 대화가 예약되었습니다.<br/>
                   멘토가 확인 후 연락드릴 예정입니다.
                 </p>
+                <button 
+                  onClick={() => {
+                    setChatMode(null);
+                    setPaymentStep(1);
+                    onStartChat(selectedMentor);
+                  }}
+                  className="px-8 py-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white font-bold rounded-lg transition-all"
+                >
+                  채팅 시작하기
+                </button>
               </div>
             </div>
           )}
