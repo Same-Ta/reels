@@ -60,6 +60,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
   // 터치 좌표
   const touchStartRef = useRef({ x: 0, y: 0 });
   const isSwipingRef = useRef(false);
+  const lastTouchTimeRef = useRef(0);
 
   // 영상 변경 시 UI 상태 업데이트
   React.useLayoutEffect(() => {
@@ -71,8 +72,8 @@ const ReelsView = ({ onClose, onStartChat }) => {
     localStorage.setItem('hasSeenReelsGuide', 'true');
   };
 
-  // [최종 해결] 갤럭시 멈춤 완전 해결: mute/unMute 제거, setVolume만 사용
-  // mute/unMute는 갤럭시에서 player를 pause 상태로 만들어버림
+  // [최종 해결] 인스타그램/갤럭시 멈춤 방지용 "강제 재생" 로직
+  // 3단 콤보: 재생 → 소리변경 → 0.1초 후 강제 재생 (심폐소생술)
   const toggleSound = () => {
     if (!iframeRef.current) return;
 
@@ -82,15 +83,36 @@ const ReelsView = ({ onClose, onStartChat }) => {
     setIsMuted(!wantSound);
     localStorage.setItem('reelsSoundOn', String(wantSound));
 
-    // 2. setVolume만 사용 (재생 상태 유지)
+    // 2. [1단계] 일단 재생 명령 (혹시 멈춰있을까봐)
+    iframeRef.current.contentWindow.postMessage(
+      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
+    );
+
+    // 3. [2단계] 소리 설정 (mute/unMute와 setVolume을 같이 보냄 - 호환성 극대화)
+    const command = wantSound ? 'unMute' : 'mute';
     const volume = wantSound ? 100 : 0;
+    
+    iframeRef.current.contentWindow.postMessage(
+      JSON.stringify({ event: 'command', func: command, args: [] }), '*'
+    );
     iframeRef.current.contentWindow.postMessage(
       JSON.stringify({ event: 'command', func: 'setVolume', args: [volume] }), '*'
     );
+
+    // 4. [3단계 - 핵심] 0.1초 뒤 강제 재생 (심폐소생술)
+    // 인스타 브라우저가 소리 변경 직후 영상을 멈추는 것을 0.1초 뒤에 다시 살려냄
+    setTimeout(() => {
+      if (iframeRef.current) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+          '*'
+        );
+      }
+    }, 100);
   };
 
   // ---------------------------------------------------------
-  // [핵심 2] 영상 로딩 완료 시 처리
+  // 영상 로딩 완료 시 처리
   // ---------------------------------------------------------
   const handleVideoLoad = () => {
     if (!iframeRef.current) return;
@@ -100,12 +122,29 @@ const ReelsView = ({ onClose, onStartChat }) => {
       JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
     );
 
-    // 2. 볼륨 설정 (mute/unMute 대신 setVolume 사용)
-    // globalSoundOn 상태에 따라 볼륨 0 또는 100 설정
-    const volume = globalSoundOn ? 100 : 0;
-    iframeRef.current.contentWindow.postMessage(
-      JSON.stringify({ event: 'command', func: 'setVolume', args: [volume] }), '*'
-    );
+    // 2. 소리 상태 적용
+    if (globalSoundOn) {
+      // 소리 켜기: 약간 딜레이를 줘서 재생 안 끊기게 함
+      setTimeout(() => {
+        if(iframeRef.current) {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
+          );
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'setVolume', args: [100] }), '*'
+          );
+          // 소리 켜면서 멈췄을까봐 재생 한번 더
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
+          );
+        }
+      }, 500); 
+    } else {
+      // 소리 끄기
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*'
+      );
+    }
   };
 
   // ---------------------------------------------------------
@@ -139,9 +178,8 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
   const handleTouchMove = React.useCallback((e) => {
     if (showChatModal || chatMode) return;
-    if(e.cancelable) e.preventDefault(); // 갤럽시 스크롤 간섭 해결
+    if(e.cancelable) e.preventDefault(); // 스크롤 방지
     
-    // 이동 거리 계산 -> 스와이프 판단
     const currentY = e.touches[0].clientY;
     if (Math.abs(touchStartRef.current.y - currentY) > 10) {
       isSwipingRef.current = true;
@@ -158,20 +196,22 @@ const ReelsView = ({ onClose, onStartChat }) => {
       if (diffY > 0) goToNext();
       else goToPrev();
     }
-    // 탭 동작은 onClick에서 처리 (중복 실행 방지)
+    // 탭 동작은 onClick에서 처리
   }, [showChatModal, chatMode, goToNext, goToPrev]);
 
   // [클릭 핸들러]
   const handleOverlayClick = (e) => {
     e.stopPropagation();
     
-    // 스와이프 중이었다면 클릭 무시
     if (isSwipingRef.current) {
       isSwipingRef.current = false;
       return;
     }
 
-    // 진짜 탭(클릭) -> 소리 토글 실행
+    // 중복 실행 방지 (300ms)
+    if (Date.now() - lastTouchTimeRef.current < 300) return;
+    lastTouchTimeRef.current = Date.now();
+
     toggleSound();
   };
 
@@ -210,7 +250,8 @@ const ReelsView = ({ onClose, onStartChat }) => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, isTransitioning, showChatModal, chatMode, goToNext, goToPrev, onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, isTransitioning, showChatModal, chatMode]);
 
   useEffect(() => {
     const handleWheel = (e) => {
@@ -273,8 +314,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
               ref={iframeRef}
               className="absolute inset-0 w-full h-full pointer-events-none object-cover"
               style={{ transform: 'scale(1.35)' }}
-              // ★ mute=1 (무음 시작) : 이것이 안정성의 핵심입니다. 
-              // 터치하면 소리가 켜지고, 그 상태가 유지됩니다.
+              // mute=1, autoplay=1 (초기 무음 자동재생)
               src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1&origin=${window.location.origin}`}
               title={currentVlog.username}
               allow="autoplay; encrypted-media"
@@ -333,22 +373,14 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
               <div className="flex gap-2 pointer-events-auto">
                 <button 
-                  onTouchStart={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                  }}
-                  onTouchEnd={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                  }}
+                  onTouchEnd={(e) => e.stopPropagation()}
                   onClick={(e) => {
                     e.stopPropagation();
-                    e.preventDefault();
                     setSelectedMentor(currentVlog);
                     setChatMode('select');
                   }}
                   className="flex-1 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-lg active:scale-95 text-xs touch-manipulation"
-                  style={{ WebkitTapHighlightColor: 'transparent', pointerEvents: 'auto' }}
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
                   <MessageCircle size={16} />
                   이 직무에 대해 질문하기
@@ -400,14 +432,11 @@ const ReelsView = ({ onClose, onStartChat }) => {
                             <span className="text-pink-400 font-bold text-lg mb-2">₩13,000</span>
                             <p className="text-gray-400 text-sm mb-2">30분 정도의 자유로운 대화</p>
                         </button>
-                        <button onClick={() => {
-                            onStartChat(selectedMentor);
-                            setChatMode(null);
-                        }} className="p-5 bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-500/30 rounded-xl text-center hover:border-green-500/60 transition-all active:scale-95 flex flex-col items-center">
-                            <div className="w-16 h-16 rounded-full bg-green-500/30 flex items-center justify-center mb-3"><MessageSquare size={32} className="text-green-400" /></div>
-                            <h4 className="text-white font-bold text-xl mb-2">1회 무료 질문하기</h4>
-                            <span className="text-green-400 font-bold text-lg mb-2">무료 체험</span>
-                            <p className="text-gray-400 text-xs">실시간 채팅으로 1회 무료 질문이 가능합니다</p>
+                        <button onClick={() => setChatMode('template')} className="p-5 bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-500/30 rounded-xl text-center hover:border-green-500/60 transition-all active:scale-95 flex flex-col items-center">
+                            <div className="w-16 h-16 rounded-full bg-green-500/30 flex items-center justify-center mb-3"><FileText size={32} className="text-green-400" /></div>
+                            <h4 className="text-white font-bold text-xl mb-2">템플릿으로 질문하기</h4>
+                            <span className="text-green-400 font-bold text-lg mb-2">1회 무료</span>
+                            <p className="text-gray-400 text-xs">질문을 작성하면 답변이 도착할 때 알림을 받아요</p>
                         </button>
                     </div>
                 </div>
