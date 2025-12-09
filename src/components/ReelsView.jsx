@@ -90,30 +90,16 @@ const ReelsView = ({ onClose, onStartChat }) => {
     try {
       // 상태 뒤집기
       const wantSound = !globalSoundOn;
-      globalSoundOn = wantSound; // 전역 변수 업데이트 (다음 영상에도 유지)
-      setIsMuted(!wantSound);    // UI 업데이트
-      localStorage.setItem('reelsSoundOn', String(wantSound)); // 음소거 상태 저장
+      globalSoundOn = wantSound;
+      setIsMuted(!wantSound);
+      localStorage.setItem('reelsSoundOn', String(wantSound));
       
-      // 1. 먼저 재생 명령 (영상이 멈춰있을 수 있으므로)
+      // 음소거 토글만 수행 (재생은 autoplay와 loop가 알아서 처리)
+      const command = wantSound ? 'unMute' : 'mute';
       iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+        JSON.stringify({ event: 'command', func: command, args: [] }), 
         '*'
       );
-      
-      // 2. 음소거 상태에 따라 명령 전송
-      if (wantSound) {
-        // 소리 켜기
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
-          '*'
-        );
-      } else {
-        // 소리 끄기
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'mute', args: [] }), 
-          '*'
-        );
-      }
     } catch (error) {
       console.error('Sound toggle error:', error);
     }
@@ -125,36 +111,16 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const handleVideoLoad = () => {
     if (!iframeRef.current) return;
     
-    // 약간의 딜레이를 주어 iframe API가 완전히 로드되도록 함
-    setTimeout(() => {
-      if (!iframeRef.current) return;
-      
-      try {
-        // 1. [재생] 일단 무조건 재생 명령부터 보냄 (영상 멈춤 방지 최우선)
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
-          '*'
-        );
-
-        // 2. [소리] 전역 상태 확인
-        if (globalSoundOn) {
-          // 사용자가 이전에 소리를 켰다면 -> 즉시 소리 켬 (연속 재생)
-          // iframe을 재활용했기 때문에 iOS Safari도 이걸 허용함!
-          iframeRef.current.contentWindow.postMessage(
-            JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
-            '*'
-          );
-        } else {
-          // 아직 소리를 안 켰거나 껐다면 -> 소리 끔 (자동재생 정책 준수)
-          iframeRef.current.contentWindow.postMessage(
-            JSON.stringify({ event: 'command', func: 'mute', args: [] }), 
-            '*'
-          );
-        }
-      } catch (error) {
-        console.error('Video control error:', error);
-      }
-    }, 50); // 50ms 딜레이로 안정성 확보
+    try {
+      // 음소거 상태만 설정 (autoplay=1과 loop=1이 이미 URL에 설정되어 자동 재생됨)
+      const command = globalSoundOn ? 'unMute' : 'mute';
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: command, args: [] }), 
+        '*'
+      );
+    } catch (error) {
+      console.error('Video control error:', error);
+    }
   };
 
   // ---------------------------------------------------------
