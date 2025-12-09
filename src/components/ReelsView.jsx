@@ -314,10 +314,12 @@ const ReelsView = ({ onClose, onStartChat }) => {
             */}
             <iframe 
               ref={iframeRef}
-              className="absolute inset-0 w-full h-full pointer-events-none"
+              className="absolute inset-0 w-full h-full"
+              style={{ pointerEvents: 'none' }}
               // mute=1 (초기 로딩은 무조건 무음) - onLoad에서 JS로 풉니다.
               // playsinline=1 (iOS Safari 필수), enablejsapi=1 (제어 API 활성화)
-              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1&origin=${window.location.origin}&widget_referrer=${window.location.origin}`}
+              // disablekb=1 (키보드 비활성화), controls=0 (컨트롤 숨김)
+              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&cc_load_policy=0&enablejsapi=1&origin=${window.location.origin}&widget_referrer=${window.location.origin}`}
               title={currentVlog.username}
               allow="autoplay; encrypted-media; gyroscope; accelerometer"
               allowFullScreen
@@ -328,10 +330,12 @@ const ReelsView = ({ onClose, onStartChat }) => {
           {/* 소리 켜기/끄기 오버레이 버튼 
               - onClick으로 작동 (PC 호환)
               - 모바일은 handleOverlayClick 내부에서 스와이프 체크
+              - z-50으로 YouTube 컨트롤을 완전히 덮음
           */}
           <div 
-            className="absolute inset-0 z-10 flex items-center justify-center cursor-pointer" 
+            className="absolute inset-0 z-50 flex items-center justify-center cursor-pointer" 
             onClick={handleOverlayClick}
+            style={{ touchAction: 'none' }}
           >
             {/* 소리 꺼진 상태(isMuted=true)일 때만 아이콘 표시 */}
             {isMuted && (
