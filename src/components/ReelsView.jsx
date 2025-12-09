@@ -18,8 +18,19 @@ import { db, auth } from '../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // [중요] "사용자가 소리를 켰는가?"를 기억하는 전역 변수
-// false(음소거)로 시작하지만, 한 번 켜면 계속 true 유지
-let globalSoundOn = false; 
+// localStorage에서 이전 세션의 음소거 상태를 복원
+// 가이드를 본 사용자는 음소거 해제 상태로 시작
+const getSavedSoundState = () => {
+  const hasSeenGuide = localStorage.getItem('hasSeenReelsGuide');
+  const savedSound = localStorage.getItem('reelsSoundOn');
+  
+  if (hasSeenGuide && savedSound !== null) {
+    return savedSound === 'true';
+  }
+  return false; // 첫 방문자는 음소거로 시작
+};
+
+let globalSoundOn = getSavedSoundState(); 
 
 const ReelsView = ({ onClose, onStartChat }) => {
   const [shuffledVlogs] = useState(() => {
@@ -74,6 +85,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
     // 이 순간부터 모든 영상이 소리와 함께 자동재생됨
     globalSoundOn = true;
     setIsMuted(false);
+    localStorage.setItem('reelsSoundOn', 'true'); // 음소거 해제 상태 저장
     
     // 현재 영상 즉시 음소거 해제
     if (iframeRef.current) {
@@ -99,6 +111,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
       const wantSound = !globalSoundOn;
       globalSoundOn = wantSound; // 전역 변수 업데이트 (다음 영상에도 유지)
       setIsMuted(!wantSound);    // UI 업데이트
+      localStorage.setItem('reelsSoundOn', String(wantSound)); // 음소거 상태 저장
       
       // 명령어 전송
       const command = wantSound ? 'unMute' : 'mute';
