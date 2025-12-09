@@ -128,32 +128,32 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const handleVideoLoad = () => {
     if (!iframeRef.current) return;
     
+    console.log('Video loading...');
+    
     try {
-      // 갤럭시 인스타 웹 대응: YouTube API가 완전히 준비될 때까지 대기
-      setTimeout(() => {
-        if (!iframeRef.current) return;
-        
-        try {
-          // 1. 음소거 상태 설정
-          const muteCommand = globalSoundOn ? 'unMute' : 'mute';
-          iframeRef.current.contentWindow.postMessage(
-            JSON.stringify({ event: 'command', func: muteCommand, args: [] }), 
-            '*'
-          );
-          
-          // 2. 재생 명령 (갤럭시 인스타 웹에서 autoplay 실패 대비)
-          setTimeout(() => {
-            if (iframeRef.current) {
-              iframeRef.current.contentWindow.postMessage(
-                JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
-                '*'
-              );
-            }
-          }, 150);
-        } catch (error) {
-          console.error('Video control error:', error);
-        }
-      }, 200);
+      // 갤럭시 인스타 웹 대응: 즉시 재생 시도
+      const sendCommand = (func, delay = 0) => {
+        setTimeout(() => {
+          if (iframeRef.current) {
+            console.log(`Sending ${func} command`);
+            iframeRef.current.contentWindow.postMessage(
+              JSON.stringify({ event: 'command', func, args: [] }), 
+              '*'
+            );
+          }
+        }, delay);
+      };
+      
+      // 갤럭시 환경에서는 적극적으로 재생 명령 전송
+      sendCommand('mute', 0);  // 무조건 음소거로 시작
+      sendCommand('playVideo', 100);  // 재생 시작
+      sendCommand('playVideo', 300);  // 재시도 1
+      sendCommand('playVideo', 500);  // 재시도 2
+      
+      // 음소거 상태는 이후에 적용
+      if (globalSoundOn) {
+        sendCommand('unMute', 700);
+      }
     } catch (error) {
       console.error('Video load error:', error);
     }
@@ -223,6 +223,15 @@ const ReelsView = ({ onClose, onStartChat }) => {
       return;
     }
 
+    // 갤럭시 환경: 터치 시 먼저 재생 보장
+    if (iframeRef.current) {
+      console.log('👆 Overlay touched, ensuring playback');
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+        '*'
+      );
+    }
+    
     // 진짜 탭(클릭) -> 소리 토글
     toggleSound();
   };
