@@ -71,7 +71,8 @@ const ReelsView = ({ onClose, onStartChat }) => {
     localStorage.setItem('hasSeenReelsGuide', 'true');
   };
 
-  // [핵심 수정 2] 갤럭시 멈춤 해결: "강력한 재생 샌드위치"
+  // [최종 해결] 갤럭시 멈춤 완전 해결: mute/unMute 제거, setVolume만 사용
+  // mute/unMute는 갤럭시에서 player를 pause 상태로 만들어버림
   const toggleSound = () => {
     if (!iframeRef.current) return;
 
@@ -79,29 +80,13 @@ const ReelsView = ({ onClose, onStartChat }) => {
     const wantSound = !globalSoundOn;
     globalSoundOn = wantSound;
     setIsMuted(!wantSound);
+    localStorage.setItem('reelsSoundOn', String(wantSound));
 
-    const command = wantSound ? 'unMute' : 'mute';
-
-    // 2. 명령어 전송 (갤럭시 필승 전략)
-    // (1) 선제 재생: 멈춰있을지 모르니 일단 재생
+    // 2. setVolume만 사용 (재생 상태 유지)
+    const volume = wantSound ? 100 : 0;
     iframeRef.current.contentWindow.postMessage(
-      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
+      JSON.stringify({ event: 'command', func: 'setVolume', args: [volume] }), '*'
     );
-
-    // (2) 소리 변경
-    iframeRef.current.contentWindow.postMessage(
-      JSON.stringify({ event: 'command', func: command, args: [] }), '*'
-    );
-
-    // (3) 후속 재생: 소리 변경 시 갤럭시가 영상을 멈추는 버그를 막기 위해
-    // 0.05초 뒤에 다시 한번 "재생해!"라고 명령을 보냄 (setTimeout 필수)
-    setTimeout(() => {
-      if (iframeRef.current) {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
-        );
-      }
-    }, 50);
   };
 
   // ---------------------------------------------------------
