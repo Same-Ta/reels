@@ -18,8 +18,6 @@ import { db, auth } from '../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // [중요] "사용자가 소리를 켰는가?"를 기억하는 전역 변수
-// localStorage에서 이전 세션의 음소거 상태를 복원
-// 가이드를 본 사용자는 음소거 해제 상태로 시작
 const getSavedSoundState = () => {
   const hasSeenGuide = localStorage.getItem('hasSeenReelsGuide');
   const savedSound = localStorage.getItem('reelsSoundOn');
@@ -56,7 +54,8 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const [selectedMentor, setSelectedMentor] = useState(null);
   
   // 현재 UI상 소리 상태 (화면에 아이콘 띄울지 말지 결정)
-  const [isMuted, setIsMuted] = useState(!globalSoundOn);
+  // 초기값: true (무음)
+  const [isMuted, setIsMuted] = useState(true);
   
   const [showGuide, setShowGuide] = useState(() => {
     const hasSeenGuide = localStorage.getItem('hasSeenReelsGuide');
@@ -70,11 +69,15 @@ const ReelsView = ({ onClose, onStartChat }) => {
   // 터치 좌표
   const touchStartRef = useRef({ x: 0, y: 0 });
   const isSwipingRef = useRef(false);
+  // [핵심] 터치/클릭 중복 방지를 위한 타임스탬프
+  const lastTouchTimeRef = useRef(0);
 
   // 영상 변경 시 UI 상태 업데이트
   useEffect(() => {
     // 전역 소리 상태에 맞춰 UI 아이콘 상태 동기화
-    setIsMuted(!globalSoundOn);
+    // 무음으로 시작
+    globalSoundOn = false;
+    setIsMuted(true);
   }, [currentIndex]);
 
   const closeGuide = () => {
@@ -86,77 +89,34 @@ const ReelsView = ({ onClose, onStartChat }) => {
   // [소리 토글] 사용자가 화면을 탭했을 때 실행
   const toggleSound = () => {
     if (!iframeRef.current) return;
-    
-    try {
-      // 상태 뒤집기
-      const wantSound = !globalSoundOn;
-      globalSoundOn = wantSound;
-      setIsMuted(!wantSound);
-      localStorage.setItem('reelsSoundOn', String(wantSound));
-      
-      // 갤럭시 인스타 웹 대응: 음소거 해제 시 명시적으로 재생도 보장
-      if (wantSound) {
-        // 1. 음소거 해제
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
-          '*'
-        );
-        // 2. 재생 명령 (갤럭시 인스타 웹에서 필요)
-        setTimeout(() => {
-          if (iframeRef.current) {
-            iframeRef.current.contentWindow.postMessage(
-              JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
-              '*'
-            );
-          }
-        }, 100);
-      } else {
-        // 음소거만
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'mute', args: [] }), 
-          '*'
-        );
-      }
-    } catch (error) {
-      console.error('Sound toggle error:', error);
-    }
+
+    // 상태 뒤집기
+    const wantSound = !globalSoundOn;
+    globalSoundOn = wantSound;
+    setIsMuted(!wantSound);
+    localStorage.setItem('reelsSoundOn', String(wantSound));
+
+    // 음소거 토글만 수행 (재생은 건드리지 않음)
+    const command = wantSound ? 'unMute' : 'mute';
+    iframeRef.current.contentWindow.postMessage(
+      JSON.stringify({ event: 'command', func: command, args: [] }),
+      '*'
+    );
   };
 
   // ---------------------------------------------------------
-  // [핵심] 영상 로딩 완료 핸들러 (숏츠 방식 구현)
+  // [핵심] 영상 로딩 완료 핸들러
   // ---------------------------------------------------------
   const handleVideoLoad = () => {
     if (!iframeRef.current) return;
-    
-    console.log('Video loading...');
-    
-    try {
-      // 갤럭시 인스타 웹 대응: 즉시 재생 시도
-      const sendCommand = (func, delay = 0) => {
-        setTimeout(() => {
-          if (iframeRef.current) {
-            console.log(`Sending ${func} command`);
-            iframeRef.current.contentWindow.postMessage(
-              JSON.stringify({ event: 'command', func, args: [] }), 
-              '*'
-            );
-          }
-        }, delay);
-      };
-      
-      // 갤럭시 환경에서는 적극적으로 재생 명령 전송
-      sendCommand('mute', 0);  // 무조건 음소거로 시작
-      sendCommand('playVideo', 100);  // 재생 시작
-      sendCommand('playVideo', 300);  // 재시도 1
-      sendCommand('playVideo', 500);  // 재시도 2
-      
-      // 음소거 상태는 이후에 적용
-      if (globalSoundOn) {
-        sendCommand('unMute', 700);
-      }
-    } catch (error) {
-      console.error('Video load error:', error);
-    }
+
+    console.log('📡 Video loaded');
+
+    // 음소거 상태만 설정 (autoplay는 URL 파라미터가 처리)
+    iframeRef.current.contentWindow.postMessage(
+      JSON.stringify({ event: 'command', func: 'mute', args: [] }), 
+      '*'
+    );
   };
 
   // ---------------------------------------------------------
@@ -210,7 +170,13 @@ const ReelsView = ({ onClose, onStartChat }) => {
       if (diffY > 0) goToNext();
       else goToPrev();
     }
-    // 탭 동작은 onClick(handleOverlayClick)에서 처리
+    // 탭(터치) 동작: 스와이프가 아니면 소리 토글
+    else {
+      // 탭으로 판단되면 소리 토글
+      toggleSound();
+      // 터치로 소리 조작을 했음을 기록 (이후 onClick 중복 방지)
+      lastTouchTimeRef.current = Date.now();
+    }
   };
 
   // [클릭 핸들러] PC/모바일 공용
@@ -223,15 +189,12 @@ const ReelsView = ({ onClose, onStartChat }) => {
       return;
     }
 
-    // 갤럭시 환경: 터치 시 먼저 재생 보장
-    if (iframeRef.current) {
-      console.log('👆 Overlay touched, ensuring playback');
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
-        '*'
-      );
+    // 최근 터치가 있었고(500ms 내) 그 터치에서 이미 소리 토글을 했다면
+    // onClick은 중복 실행으로 이어지므로 무시
+    if (Date.now() - lastTouchTimeRef.current < 500) {
+      return;
     }
-    
+
     // 진짜 탭(클릭) -> 소리 토글
     toggleSound();
   };
