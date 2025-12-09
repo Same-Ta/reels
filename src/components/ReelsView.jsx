@@ -17,18 +17,9 @@ import vlogDataDefault from '../data/vlogData';
 import { db, auth } from '../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-// [중요] "사용자가 소리를 켰는가?"를 기억하는 전역 변수
-const getSavedSoundState = () => {
-  const hasSeenGuide = localStorage.getItem('hasSeenReelsGuide');
-  const savedSound = localStorage.getItem('reelsSoundOn');
-  
-  if (hasSeenGuide && savedSound !== null) {
-    return savedSound === 'true';
-  }
-  return false; // 첫 방문자는 음소거로 시작
-};
-
-let globalSoundOn = getSavedSoundState(); 
+// [중요] 사용자가 소리를 켰는지 기억하는 변수 (기본값: 무음)
+// 정책상 첫 진입은 무조건 무음이어야 영상이 재생됩니다.
+let globalSoundOn = false; 
 
 const ReelsView = ({ onClose, onStartChat }) => {
   const [shuffledVlogs] = useState(() => {
@@ -74,49 +65,71 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
   // 영상 변경 시 UI 상태 업데이트
   useEffect(() => {
-    // 전역 소리 상태에 맞춰 UI 아이콘 상태 동기화
-    // 무음으로 시작
-    globalSoundOn = false;
-    setIsMuted(true);
+    // 다음 영상으로 넘어가면 전역 설정(사용자가 소리 켰는지)을 따라감
+    setIsMuted(!globalSoundOn);
   }, [currentIndex]);
 
   const closeGuide = () => {
     setShowGuide(false);
     localStorage.setItem('hasSeenReelsGuide', 'true');
-    // 가이드만 닫고 음소거는 사용자가 직접 해제하도록 함
   };
 
-  // [소리 토글] 사용자가 화면을 탭했을 때 실행
+  // [핵심 1] 소리 토글: "재생 샌드위치" 전략
+  // 버튼을 누르면 영상이 멈추지 않게 앞뒤로 재생 명령을 감쌉니다.
   const toggleSound = () => {
     if (!iframeRef.current) return;
 
-    // 상태 뒤집기
+    // 1. 상태 업데이트
     const wantSound = !globalSoundOn;
     globalSoundOn = wantSound;
     setIsMuted(!wantSound);
-    localStorage.setItem('reelsSoundOn', String(wantSound));
 
-    // 음소거 토글만 수행 (재생은 건드리지 않음)
+    // 2. [선제공격] 일단 재생 명령 (멈춤 방지)
+    iframeRef.current.contentWindow.postMessage(
+      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
+    );
+
+    // 3. [본론] 소리 설정 변경
     const command = wantSound ? 'unMute' : 'mute';
     iframeRef.current.contentWindow.postMessage(
-      JSON.stringify({ event: 'command', func: command, args: [] }),
-      '*'
+      JSON.stringify({ event: 'command', func: command, args: [] }), '*'
+    );
+
+    // 4. [확인사살] 소리 바꾸면서 멈췄을까봐 다시 재생 명령
+    // (딜레이 없이 바로 보내야 모바일 브라우저가 사용자 터치로 인정함)
+    iframeRef.current.contentWindow.postMessage(
+      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
     );
   };
 
   // ---------------------------------------------------------
-  // [핵심] 영상 로딩 완료 핸들러
+  // [핵심 2] 영상 로딩 완료 시 처리
   // ---------------------------------------------------------
   const handleVideoLoad = () => {
     if (!iframeRef.current) return;
 
-    console.log('📡 Video loaded');
-
-    // 음소거 상태만 설정 (autoplay는 URL 파라미터가 처리)
+    // 1. 일단 무조건 재생 (가장 중요)
     iframeRef.current.contentWindow.postMessage(
-      JSON.stringify({ event: 'command', func: 'mute', args: [] }), 
-      '*'
+      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
     );
+
+    // 2. 사용자가 이전에 소리를 켰다면? (globalSoundOn === true)
+    if (globalSoundOn) {
+      // 살짝 늦게 소리를 켜서(unMute) 아이폰/갤럭시의 차단을 회피
+      // iframe을 재활용(key 제거)했으므로 이 방식이 통함
+      setTimeout(() => {
+        if(iframeRef.current) {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
+          );
+        }
+      }, 500); 
+    } else {
+      // 소리를 안 켰다면 확실히 끔
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*'
+      );
+    }
   };
 
   // ---------------------------------------------------------
@@ -165,37 +178,24 @@ const ReelsView = ({ onClose, onStartChat }) => {
     const endY = e.changedTouches[0].clientY;
     const diffY = touchStartRef.current.y - endY;
     
-    // 스와이프 (50px 이상)
     if (Math.abs(diffY) > 50) {
       if (diffY > 0) goToNext();
       else goToPrev();
     }
-    // 탭(터치) 동작: 스와이프가 아니면 소리 토글
-    else {
-      // 탭으로 판단되면 소리 토글
-      toggleSound();
-      // 터치로 소리 조작을 했음을 기록 (이후 onClick 중복 방지)
-      lastTouchTimeRef.current = Date.now();
-    }
+    // 탭 동작은 onClick에서 처리 (중복 실행 방지)
   };
 
-  // [클릭 핸들러] PC/모바일 공용
+  // [클릭 핸들러]
   const handleOverlayClick = (e) => {
     e.stopPropagation();
     
-    // 스와이프 중이었다면 클릭 무시 (화면 넘김만 수행)
+    // 스와이프 중이었다면 클릭 무시
     if (isSwipingRef.current) {
       isSwipingRef.current = false;
       return;
     }
 
-    // 최근 터치가 있었고(500ms 내) 그 터치에서 이미 소리 토글을 했다면
-    // onClick은 중복 실행으로 이어지므로 무시
-    if (Date.now() - lastTouchTimeRef.current < 500) {
-      return;
-    }
-
-    // 진짜 탭(클릭) -> 소리 토글
+    // 진짜 탭(클릭) -> 소리 토글 실행
     toggleSound();
   };
 
@@ -292,16 +292,16 @@ const ReelsView = ({ onClose, onStartChat }) => {
                이렇게 해야 아이폰에서 영상이 바뀌어도 "같은 플레이어"로 인식해서 
                소리 권한을 유지해줍니다.
             */}
+            {/* ★ Key 없음: iframe 재활용 (중요) */}
             <iframe 
               ref={iframeRef}
-              className="absolute inset-0 w-full h-full"
-              style={{ pointerEvents: 'none' }}
-              // mute=1 (초기 로딩은 무조건 무음) - onLoad에서 JS로 풉니다.
-              // playsinline=1 (iOS Safari 필수), enablejsapi=1 (제어 API 활성화)
-              // disablekb=1 (키보드 비활성화), controls=0 (컨트롤 숨김)
-              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&cc_load_policy=0&enablejsapi=1&origin=${window.location.origin}&widget_referrer=${window.location.origin}`}
+              className="absolute inset-0 w-full h-full pointer-events-none object-cover"
+              style={{ transform: 'scale(1.35)' }}
+              // ★ mute=1 (무음 시작) : 이것이 안정성의 핵심입니다. 
+              // 터치하면 소리가 켜지고, 그 상태가 유지됩니다.
+              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1&origin=${window.location.origin}`}
               title={currentVlog.username}
-              allow="autoplay; encrypted-media; gyroscope; accelerometer"
+              allow="autoplay; encrypted-media"
               allowFullScreen
               onLoad={handleVideoLoad}
             />
