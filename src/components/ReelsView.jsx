@@ -94,7 +94,13 @@ const ReelsView = ({ onClose, onStartChat }) => {
       setIsMuted(!wantSound);    // UI 업데이트
       localStorage.setItem('reelsSoundOn', String(wantSound)); // 음소거 상태 저장
       
-      // 음소거 상태에 따라 명령 전송
+      // 1. 먼저 재생 명령 (영상이 멈춰있을 수 있으므로)
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+        '*'
+      );
+      
+      // 2. 음소거 상태에 따라 명령 전송
       if (wantSound) {
         // 소리 켜기
         iframeRef.current.contentWindow.postMessage(
