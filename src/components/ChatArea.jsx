@@ -248,28 +248,8 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
              </div>
           </div>
           <h3 className="text-xl font-bold text-gray-800">{activeChat.vloggerName}</h3>
-          <p className="text-sm text-gray-500 mb-4">{activeChat.vloggerRole}</p>
-          
-          <div className="flex gap-6 w-full justify-center">
-            <div className="flex flex-col items-center">
-              <span className="w-10 h-10 rounded-full bg-green-50 text-green-600 flex items-center justify-center mb-1">
-                <Phone size={18} />
-              </span>
-              <span className="text-[10px] text-gray-400">Call</span>
-            </div>
-            <div className="flex flex-col items-center">
-              <span className="w-10 h-10 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-1">
-                <Video size={18} />
-              </span>
-              <span className="text-[10px] text-gray-400">Video</span>
-            </div>
-            <div className="flex flex-col items-center">
-               <span className="w-10 h-10 rounded-full bg-purple-50 text-purple-600 flex items-center justify-center mb-1">
-                <User size={18} />
-              </span>
-              <span className="text-[10px] text-gray-400">Profile</span>
-            </div>
-          </div>
+          <p className="text-sm text-gray-500 mb-2">{activeChat.vloggerRole || vlogInfo.role}</p>
+          <p className="text-sm text-gray-600 text-center px-4">{vlogInfo.description || '현직자와의 대화를 통해 직무에 대해 알아보세요'}</p>
         </div>
 
         <div className="p-6 space-y-6">

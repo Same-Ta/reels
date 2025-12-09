@@ -7,7 +7,7 @@ export const VLOG_DATA = [
     role: '소프트웨어 개발자',
     location: 'Seoul, Korea',
     email: 'dev_vlog@tech.com',
-    description: '개발자의 하루 일과를 공개합니다! 코딩하고 회의하고 🖥️',
+    description: '소프트웨어 개발자로서 웹/앱 서비스를 개발하고, 코드 리뷰와 기술 문서 작성, 팀 회의를 통한 협업 업무를 수행합니다',
     likes: 15200,
     tags: ['#개발자', '#브이로그', '#IT']
   },
@@ -29,7 +29,7 @@ export const VLOG_DATA = [
     role: '패션 브랜드 마케터',
     location: 'Seoul, Seongsu',
     email: 'fashion_mkt@brand.com',
-    description: '패션 브랜드에서 마케팅하는 일상 👗✨',
+    description: '패션 브랜드 마케터로서 SNS 콘텐츠 기획 및 제작, 인플루언서 협업, 신제품 런칭 캠페인 기획, 트렌드 분석 및 마켓 리서치 업무를 진행합니다',
     likes: 12100,
     tags: ['#패션', '#마케팅', '#브랜드']
   },
@@ -40,7 +40,7 @@ export const VLOG_DATA = [
     role: '뷰티 에디터 서포터즈',
     location: 'Seoul, Yongsan',
     email: 'amore_editor@amore.com',
-    description: '아모레퍼시픽 공식 에디터 서포터즈 활동기! 💄',
+    description: '뷰티 에디터로서 신제품 리뷰 콘텐츠 제작, 브랜드 이벤트 참여, 뷰티 트렌드 리포트 작성, SNS 커뮤니티 운영 및 소비자 피드백 분석 업무를 수행합니다',
     likes: 18500,
     tags: ['#아모레퍼시픽', '#뷰티', '#서포터즈']
   },
@@ -51,7 +51,7 @@ export const VLOG_DATA = [
     role: '뷰티 콘텐츠 마케터',
     location: 'Seoul, Gangnam',
     email: 'beauty_content@cosmetic.kr',
-    description: '화장품 콘텐츠 만드는 마케터의 하루 🎬💋',
+    description: '뷰티 콘텐츠 마케터로서 화장품 브랜드의 영상/사진 콘텐츠 기획 및 제작, 인플루언서 협업 관리, SNS 채널 운영, 콘텐츠 성과 분석 및 개선 업무를 담당합니다',
     likes: 9800,
     tags: ['#뷰티', '#콘텐츠', '#마케터']
   },
@@ -62,7 +62,7 @@ export const VLOG_DATA = [
     role: '브랜드 마케터',
     location: 'Seoul, Mapo',
     email: 'brand_guide@mkt.com',
-    description: '브랜드 마케팅? 콘텐츠 마케팅? 한번에 정리해드려요! 📚',
+    description: '브랜드 마케터로서 브랜드 아이덴티티 구축, 마케팅 전략 수립, 온/오프라인 캠페인 기획 및 실행, 경쟁사 분석, 시장 리서치 및 데이터 기반 의사결정 업무를 수행합니다',
     likes: 21000,
     tags: ['#브랜드마케팅', '#콘텐츠마케팅', '#마케터']
   },
@@ -73,7 +73,7 @@ export const VLOG_DATA = [
     role: '마케터 (전직 간호사)',
     location: 'Seoul, Jongno',
     email: 'nurse_to_mkt@career.com',
-    description: '간호사에서 마케터로! 커리어 전환 스토리 🏥➡️💼',
+    description: '헬스케어 브랜드 마케터로서 의료 제품 마케팅 전략 수립, 의료 전문가 네트워크 관리, 환자 경험 개선 프로젝트, 의료 콘텐츠 감수 및 교육 자료 제작 업무를 수행합니다',
     likes: 15600,
     tags: ['#커리어전환', '#간호사', '#마케터']
   },

@@ -17,7 +17,8 @@ import vlogDataDefault from '../data/vlogData';
 import { db, auth } from '../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-// 전역 변수 (기본값: 무음)
+// [중요] 사용자가 소리를 켰는지 기억하는 변수 (기본값: 무음)
+// 정책상 첫 진입은 무조건 무음이어야 영상이 재생됩니다.
 let globalSoundOn = false; 
 
 const ReelsView = ({ onClose, onStartChat }) => {
@@ -37,6 +38,10 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const [showChatModal, setShowChatModal] = useState(false);
   const [chatMode, setChatMode] = useState(null); 
   const [paymentStep, setPaymentStep] = useState(1);
+  const [templateStep, setTemplateStep] = useState(1);
+  const [questionSummary, setQuestionSummary] = useState('');
+  const [questionDetail, setQuestionDetail] = useState('');
+  const [email, setEmail] = useState('');
   const [selectedMentor, setSelectedMentor] = useState(null);
   
   // 현재 UI상 소리 상태 (화면에 아이콘 띄울지 말지 결정)
@@ -56,7 +61,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const touchStartRef = useRef({ x: 0, y: 0 });
   const isSwipingRef = useRef(false);
 
-  // [수정 1] 영상 변경 시: 전역 설정(사용자가 소리 켰는지)을 따라감
+  // 영상 변경 시 UI 상태 업데이트
   React.useLayoutEffect(() => {
     setIsMuted(!globalSoundOn);
   }, [currentIndex]);
@@ -99,7 +104,9 @@ const ReelsView = ({ onClose, onStartChat }) => {
     }, 50);
   };
 
-  // [핵심 수정 3] 영상 로딩 완료 시 처리
+  // ---------------------------------------------------------
+  // [핵심 2] 영상 로딩 완료 시 처리
+  // ---------------------------------------------------------
   const handleVideoLoad = () => {
     if (!iframeRef.current) return;
 
@@ -110,15 +117,12 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
     // 2. 사용자가 이전에 소리를 켰다면? (globalSoundOn === true)
     if (globalSoundOn) {
-      // 바로 켜지 말고 0.5초 뒤에 켬 (아이폰/갤럭시 로딩 충돌 방지)
+      // 살짝 늦게 소리를 켜서(unMute) 아이폰/갤럭시의 차단을 회피
+      // iframe을 재활용(key 제거)했으므로 이 방식이 통함
       setTimeout(() => {
         if(iframeRef.current) {
           iframeRef.current.contentWindow.postMessage(
             JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
-          );
-          // 소리 켜면서 멈출까봐 재생 명령 한 번 더
-          iframeRef.current.contentWindow.postMessage(
-            JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
           );
         }
       }, 500); 
@@ -161,7 +165,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
   const handleTouchMove = React.useCallback((e) => {
     if (showChatModal || chatMode) return;
-    if(e.cancelable) e.preventDefault(); // 갤럭시 스크롤 간섭 해결
+    if(e.cancelable) e.preventDefault(); // 갤럽시 스크롤 간섭 해결
     
     // 이동 거리 계산 -> 스와이프 판단
     const currentY = e.touches[0].clientY;
@@ -183,10 +187,9 @@ const ReelsView = ({ onClose, onStartChat }) => {
     // 탭 동작은 onClick에서 처리 (중복 실행 방지)
   }, [showChatModal, chatMode, goToNext, goToPrev]);
 
-  // [핵심 수정 4] 클릭 핸들러: 이벤트 전파 완벽 차단
+  // [클릭 핸들러]
   const handleOverlayClick = (e) => {
-    e.stopPropagation(); // 부모로 이벤트 전파 중단
-    e.preventDefault();  // 브라우저 기본 동작(더블탭 확대 등) 중단
+    e.stopPropagation();
     
     // 스와이프 중이었다면 클릭 무시
     if (isSwipingRef.current) {
@@ -249,6 +252,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
   // DB 저장 함수들 (기존 유지)
   const saveOneOnOneClick = async () => { if (!selectedMentor) return; try { await addDoc(collection(db, 'oneOnOneClicks'), { mentorId: selectedMentor.id, mentorName: selectedMentor.username, mentorRole: selectedMentor.role, userId: auth.currentUser?.uid || 'anonymous', amount: 20000, status: 'clicked', createdAt: serverTimestamp() }); } catch (error) { console.error('Error', error); } };
+  const saveTemplateQuestion = async () => { if (!selectedMentor) return; try { await addDoc(collection(db, 'templateQuestions'), { mentorId: selectedMentor.id, mentorName: selectedMentor.username, mentorRole: selectedMentor.role, userId: auth.currentUser?.uid || 'anonymous', questionSummary: questionSummary, questionDetail: questionDetail, email: email, status: 'pending', createdAt: serverTimestamp() }); } catch (error) { console.error('Error', error); } };
   const toggleInterest = async (id) => { const newState = !interested[id]; if (!auth.currentUser) { alert('로그인이 필요합니다.'); return; } setInterested(prev => ({ ...prev, [id]: newState })); if (newState) { try { await addDoc(collection(db, 'bookmarks'), { userId: auth.currentUser.uid, vlogId: id, vlogData: currentVlog, createdAt: serverTimestamp() }); } catch { setInterested(prev => ({ ...prev, [id]: false })); } } };
 
   const currentVlog = shuffledVlogs[currentIndex];
@@ -285,13 +289,18 @@ const ReelsView = ({ onClose, onStartChat }) => {
           }}
         >
           {/* YouTube iframe */}
-          <div className="absolute inset-0 w-full h-full overflow-hidden">
-            {/* ★ Key 제거됨 (iframe 재활용) */}
+          <div className="absolute inset-0 w-full h-full overflow-hidden rounded-xl">
+            {/* ★★★ [가장 중요] key를 제거하여 iframe을 재활용합니다. ★★★ 
+               이렇게 해야 아이폰에서 영상이 바뀌어도 "같은 플레이어"로 인식해서 
+               소리 권한을 유지해줍니다.
+            */}
+            {/* ★ Key 없음: iframe 재활용 (중요) */}
             <iframe 
               ref={iframeRef}
               className="absolute inset-0 w-full h-full pointer-events-none object-cover"
-              style={{ transform: 'scale(1.35)', pointerEvents: 'none' }} // pointerEvents: none 추가 (확실한 클릭 방지)
-              // mute=1, autoplay=1 (필수)
+              style={{ transform: 'scale(1.35)' }}
+              // ★ mute=1 (무음 시작) : 이것이 안정성의 핵심입니다. 
+              // 터치하면 소리가 켜지고, 그 상태가 유지됩니다.
               src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1&origin=${window.location.origin}`}
               title={currentVlog.username}
               allow="autoplay; encrypted-media"
@@ -300,13 +309,14 @@ const ReelsView = ({ onClose, onStartChat }) => {
             />
           </div>
 
-          {/* ★ 소리 켜기/끄기 오버레이 버튼 
-              - bg-transparent: 클릭 관통 방지
-              - onClick: toggleSound 실행
-          */}
+          {/* 소리 켜기/끄기 오버레이 버튼 - 하단 영역 제외 */}
           <div 
-            className="absolute inset-0 z-10 w-full h-full bg-transparent flex items-center justify-center cursor-pointer" 
+            className="absolute inset-0 z-20 flex items-center justify-center cursor-pointer" 
             onClick={handleOverlayClick}
+            style={{ 
+              touchAction: 'none',
+              paddingBottom: '200px' // 하단 정보 영역만큼 패딩 추가
+            }}
           >
             {/* 소리 꺼진 상태(isMuted=true)일 때만 아이콘 표시 */}
             {isMuted && (
@@ -319,8 +329,8 @@ const ReelsView = ({ onClose, onStartChat }) => {
             )}
           </div>
 
-          {/* 하단 정보 영역 (기존 유지) */}
-          <div className="absolute bottom-0 left-0 right-0 p-3 pb-safe bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none z-20">
+          {/* 하단 정보 영역 - z-index를 높여서 오버레이 위에 배치 */}
+          <div className="absolute bottom-0 left-0 right-0 p-3 pb-safe bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none z-50">
             <div className="pointer-events-auto pb-4">
               <div className="flex items-center gap-2 mb-1.5">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm ring-1 ring-white">
@@ -347,16 +357,24 @@ const ReelsView = ({ onClose, onStartChat }) => {
                 ))}
               </div>
 
-              <div className="flex gap-2">
+              <div className="flex gap-2 pointer-events-auto">
                 <button 
-                  onTouchEnd={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                  }}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
+                    e.preventDefault();
                     setSelectedMentor(currentVlog);
                     setChatMode('select');
                   }}
                   className="flex-1 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-lg active:scale-95 text-xs touch-manipulation"
-                  style={{ WebkitTapHighlightColor: 'transparent' }}
+                  style={{ WebkitTapHighlightColor: 'transparent', pointerEvents: 'auto' }}
                 >
                   <MessageCircle size={16} />
                   이 직무에 대해 질문하기
@@ -392,7 +410,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
       {chatMode === 'select' && (
         <div className="absolute inset-0 z-60 bg-black flex flex-col">
             <div className="flex items-center justify-between p-4 border-b border-gray-800">
-                <button onClick={() => { setChatMode(null); }} className="p-2 hover:bg-gray-800 rounded-full">
+                <button onClick={() => { setChatMode(null); setTemplateStep(1); setQuestionSummary(''); setQuestionDetail(''); setEmail(''); }} className="p-2 hover:bg-gray-800 rounded-full">
                     <ArrowLeft size={24} className="text-white" />
                 </button>
                 <h3 className="text-white font-bold text-lg">멘토에게 질문하기</h3>
@@ -791,7 +809,223 @@ const ReelsView = ({ onClose, onStartChat }) => {
         </div>
       )}
 
-      {/* 템플릿 질문 화면은 제거됨 - 1회 무료 채팅으로 대체 */}
+      {/* 템플릿 질문 전체 화면 */}
+      {chatMode === 'template' && (
+        <div className="absolute inset-0 z-60 bg-white overflow-y-auto">
+          <div className="flex flex-col md:flex-row min-h-full">
+            {/* 닫기 버튼 - 최상단 고정 */}
+            <button 
+              onClick={() => {
+                setChatMode(null);
+                setShowChatModal(false);
+                setTemplateStep(1);
+                setQuestionSummary('');
+                setQuestionDetail('');
+                setEmail('');
+              }}
+              className="fixed top-4 right-4 p-2 hover:bg-gray-100 rounded-full z-10 bg-white shadow-md"
+            >
+              <X size={24} className="text-gray-500" />
+            </button>
+
+            {/* 왼쪽: 멘토 정보 - 모바일에서는 위에 표시 */}
+            <div className="w-full md:w-80 md:min-w-[320px] bg-gray-50 p-6 md:p-8 border-b md:border-b-0 md:border-r border-gray-200 flex-shrink-0">
+              {/* 프로필 이미지 */}
+              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 flex items-center justify-center text-white font-bold text-2xl mb-4">
+                {selectedMentor?.username?.[0]}
+              </div>
+
+              {/* 카테고리 */}
+              <p className="text-gray-500 text-sm mb-1">{selectedMentor?.tags?.[0]?.replace('#', '')}</p>
+              
+              {/* 이름 + 신규 멘토 뱃지 */}
+              <div className="flex items-center gap-2 mb-2">
+                <h2 className="text-gray-900 font-bold text-xl">{selectedMentor?.username?.replace('_', ' ')}</h2>
+                <span className="bg-pink-500 text-white text-xs px-2 py-0.5 rounded">신규 멘토</span>
+              </div>
+
+              {/* 회사/직무 */}
+              <p className="text-blue-600 text-sm mb-4">{selectedMentor?.role}</p>
+
+              {/* 자기소개 */}
+              <div className="text-gray-700 text-sm leading-relaxed space-y-3">
+                <p>안녕하세요!</p>
+                <p>{selectedMentor?.description}</p>
+                <p>커리어, 직무 고민에 대한 해답을 진짜 현직자에게 받아보세요.</p>
+                <p>짧지만 여러 회사를 밀도있게 다녀본 경험이 궁금하시다면!</p>
+                <p className="text-blue-600 underline cursor-pointer">질문을 남겨주세요~</p>
+                <p className="text-gray-400 text-xs cursor-pointer">더보기</p>
+              </div>
+
+              {/* 태그들 */}
+              <div className="flex flex-wrap gap-2 mt-6">
+                {currentVlog.tags.map(tag => (
+                  <span key={tag} className="text-gray-500 text-sm">{tag}</span>
+                ))}
+                <span className="text-gray-500 text-sm">#면접</span>
+                <span className="text-gray-500 text-sm">#이직</span>
+                <span className="text-gray-500 text-sm">#해외취업</span>
+                <span className="text-gray-500 text-sm">#자소서</span>
+              </div>
+            </div>
+
+            {/* 오른쪽: 질문 폼 - 모바일에서는 아래에 표시 */}
+            <div className="w-full flex-1 p-6 md:p-8 pb-12">
+              {templateStep === 1 && (
+                <>
+                  <h1 className="text-gray-900 font-bold text-2xl mb-2">멘토에게 질문하기</h1>
+                  <p className="text-gray-500 text-sm mb-6">
+                    OOO님 고민이 있나요?<br/>
+                    커리어, 직무 고민에 대한 해답을 진짜 현직자에게 받아보세요.
+                  </p>
+
+                  {/* 질문 작성 안내 */}
+                  <div className="bg-gray-50 p-4 rounded-lg mb-6">
+                    <p className="text-pink-500 font-medium mb-2">질문을 구체적으로 작성해 주세요.</p>
+                    <p className="text-gray-500 text-sm">예시1. 마케팅 직무로 전환을 고려 중인데, <span className="text-pink-400">비전공자도 가능한지, 어떤 준비가 필요한지, 실제 업무는 어떤 것들이 있는지</span> 구체적으로 알고 싶습니다.</p>
+                    <br></br>
+                    <p className="text-gray-500 text-sm">예시2. IT 스타트업으로 이직을 고민 중인데, <span className="text-pink-400">대기업과 스타트업의 업무 방식 차이는 무엇인지, 커리어 성장 측면에서 어떤 장단점이 있는지</span> 조언을 듣고 싶습니다.</p>
+                  </div>
+
+                  {/* 고민 한줄 요약 */}
+                  <div className="mb-4">
+                    <label className="text-gray-700 text-sm block mb-2">제목(고민 한줄 요약)</label>
+                    <input 
+                      type="text"
+                      value={questionSummary}
+                      onChange={(e) => setQuestionSummary(e.target.value)}
+                      placeholder="고민을 한 줄로 요약해주세요"
+                      className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-pink-500"
+                    />
+                  </div>
+
+                  {/* 질문 내용 안내 */}
+                  <div className="bg-gray-50 p-4 rounded-lg mb-4 text-sm">
+                    <p className="text-gray-700 font-medium mb-2">질문 내용은 콘텐츠 소재로 사용될 수 있습니다.</p>
+                    <p className="text-gray-500">- 오다 콘텐츠는 실제 질문/답변 중 우수 사례를 편집하여 발행합니다.</p>
+                    <p className="text-gray-500">- 개인 정보는 콘텐츠 검수 과정에서 안전하게 삭제됩니다.</p>
+                  </div>
+
+                  {/* 서비스 취지 안내 */}
+                  <div className="mb-4 text-sm">
+                    <p className="text-gray-700 font-medium mb-2">서비스 취지에 맞지 않는 질문을 남길 경우 이용이 제한될 수 있습니다.</p>
+                    <p className="text-gray-500">- 과제를 목적으로 하는 인터뷰 요청</p>
+                    <p className="text-gray-500">- 외부 프로그램 섭외 요청</p>
+                    <p className="text-gray-500">- 사적 표현 등 관련없는 질문</p>
+                  </div>
+
+                  <p className="text-gray-500 text-sm mb-4">
+                    자세한 <span className="text-blue-600 underline cursor-pointer">내용은</span> 질문하기 <span className="text-blue-600 underline cursor-pointer">이용방법</span>을 확인해 주세요.
+                  </p>
+
+                  {/* 질문 작성 */}
+                  <div className="mb-6">
+                    <textarea 
+                      value={questionDetail}
+                      onChange={(e) => setQuestionDetail(e.target.value)}
+                      placeholder="질문을 작성해주세요.."
+                      rows={5}
+                      className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-pink-500 resize-none"
+                    />
+                  </div>
+
+                  {/* 전송하기 버튼 */}
+                  <button 
+                    onClick={() => {
+                      if (questionSummary.trim() && questionDetail.trim()) {
+                        setTemplateStep(2);
+                      }
+                    }}
+                    disabled={!questionSummary.trim() || !questionDetail.trim()}
+                    className="w-full py-4 bg-pink-500 hover:bg-pink-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all"
+                  >
+                    전송하기
+                  </button>
+                </>
+              )}
+
+              {templateStep === 2 && (
+                <>
+                  <button 
+                    onClick={() => setTemplateStep(1)}
+                    className="flex items-center gap-2 text-gray-500 mb-6 hover:text-gray-700"
+                  >
+                    <ArrowLeft size={20} />
+                    <span>뒤로</span>
+                  </button>
+
+                  <div className="text-center py-8">
+                    <div className="w-20 h-20 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
+                      <Send size={36} className="text-green-500" />
+                    </div>
+                    <h2 className="text-gray-900 font-bold text-xl mb-2">질문이 전송될 준비가 되었어요!</h2>
+                    <p className="text-gray-500 text-sm mb-8">답변이 도착하면 알림을 받을 이메일 주소를 입력해주세요.</p>
+
+                    <div className="max-w-xs mx-auto mb-6">
+                      <label className="text-gray-700 text-sm block mb-2 text-left">이메일 주소</label>
+                      <input 
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="example@email.com"
+                        className="w-full p-3 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:border-pink-500 text-center"
+                      />
+                    </div>
+
+                    <p className="text-gray-400 text-sm mb-8">
+                      입력하신 이메일로 멘토의 답변 알림이 발송됩니다.
+                    </p>
+
+                    <button 
+                      onClick={async () => {
+                        if (email.includes('@') && email.includes('.')) {
+                          await saveTemplateQuestion();
+                          setTemplateStep(3);
+                        }
+                      }}
+                      disabled={!email.includes('@') || !email.includes('.')}
+                      className="w-full max-w-xs py-4 bg-pink-500 hover:bg-pink-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-lg transition-all mx-auto"
+                    >
+                      질문 전송하기
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {templateStep === 3 && (
+                <>
+                  <div className="w-24 h-24 rounded-full bg-green-500 flex items-center justify-center mx-auto mb-6 mt-16">
+                    <Check size={48} className="text-white" />
+                  </div>
+                  <h2 className="text-gray-900 font-bold text-2xl mb-4">질문이 전송되었습니다!</h2>
+                  <p className="text-gray-500 mb-2">
+                    {selectedMentor?.username?.replace('_', ' ')}님이 답변을 작성하면
+                  </p>
+                  <p className="text-gray-700 font-medium mb-6">
+                    {email}로 알림을 보내드려요.
+                  </p>
+                  <p className="text-gray-400 text-sm mb-8">
+                    보통 1~3일 내에 답변이 도착합니다.
+                  </p>
+                  <button 
+                    onClick={() => {
+                      setShowChatModal(false);
+                      setChatMode(null);
+                      setTemplateStep(1);
+                      setQuestionSummary('');
+                      setQuestionDetail('');
+                      setEmail('');
+                    }}
+                    className="px-12 py-4 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-lg transition-all"
+                  >
+                    확인
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 가이드라인 모달 */}
       {showGuide && (
