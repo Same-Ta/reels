@@ -94,12 +94,29 @@ const ReelsView = ({ onClose, onStartChat }) => {
       setIsMuted(!wantSound);
       localStorage.setItem('reelsSoundOn', String(wantSound));
       
-      // 음소거 토글만 수행 (재생은 autoplay와 loop가 알아서 처리)
-      const command = wantSound ? 'unMute' : 'mute';
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: command, args: [] }), 
-        '*'
-      );
+      // 갤럭시 인스타 웹 대응: 음소거 해제 시 명시적으로 재생도 보장
+      if (wantSound) {
+        // 1. 음소거 해제
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
+          '*'
+        );
+        // 2. 재생 명령 (갤럭시 인스타 웹에서 필요)
+        setTimeout(() => {
+          if (iframeRef.current) {
+            iframeRef.current.contentWindow.postMessage(
+              JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+              '*'
+            );
+          }
+        }, 100);
+      } else {
+        // 음소거만
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'mute', args: [] }), 
+          '*'
+        );
+      }
     } catch (error) {
       console.error('Sound toggle error:', error);
     }
@@ -112,14 +129,33 @@ const ReelsView = ({ onClose, onStartChat }) => {
     if (!iframeRef.current) return;
     
     try {
-      // 음소거 상태만 설정 (autoplay=1과 loop=1이 이미 URL에 설정되어 자동 재생됨)
-      const command = globalSoundOn ? 'unMute' : 'mute';
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: command, args: [] }), 
-        '*'
-      );
+      // 갤럭시 인스타 웹 대응: YouTube API가 완전히 준비될 때까지 대기
+      setTimeout(() => {
+        if (!iframeRef.current) return;
+        
+        try {
+          // 1. 음소거 상태 설정
+          const muteCommand = globalSoundOn ? 'unMute' : 'mute';
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: muteCommand, args: [] }), 
+            '*'
+          );
+          
+          // 2. 재생 명령 (갤럭시 인스타 웹에서 autoplay 실패 대비)
+          setTimeout(() => {
+            if (iframeRef.current) {
+              iframeRef.current.contentWindow.postMessage(
+                JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+                '*'
+              );
+            }
+          }, 150);
+        } catch (error) {
+          console.error('Video control error:', error);
+        }
+      }, 200);
     } catch (error) {
-      console.error('Video control error:', error);
+      console.error('Video load error:', error);
     }
   };
 
