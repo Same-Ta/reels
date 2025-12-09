@@ -18,8 +18,8 @@ import { db, auth } from '../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // [중요] "사용자가 소리를 켰는가?"를 기억하는 전역 변수
-// false(음소거)로 시작하지만, 한 번 켜면 계속 true 유지
-let globalSoundOn = false; 
+// true(소리 켜짐)로 시작하여 자동 재생
+let globalSoundOn = true; 
 
 const ReelsView = ({ onClose, onStartChat }) => {
   const [shuffledVlogs] = useState(() => {
@@ -45,7 +45,8 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const [selectedMentor, setSelectedMentor] = useState(null);
   
   // 현재 UI상 소리 상태 (화면에 아이콘 띄울지 말지 결정)
-  const [isMuted, setIsMuted] = useState(!globalSoundOn);
+  // 초기값: false (소리 켜짐)
+  const [isMuted, setIsMuted] = useState(false);
   
   const [showGuide, setShowGuide] = useState(() => {
     const hasSeenGuide = localStorage.getItem('hasSeenReelsGuide');
@@ -63,7 +64,9 @@ const ReelsView = ({ onClose, onStartChat }) => {
   // 영상 변경 시 UI 상태 업데이트
   useEffect(() => {
     // 전역 소리 상태에 맞춰 UI 아이콘 상태 동기화
-    setIsMuted(!globalSoundOn);
+    // 소리 켜진 상태 유지
+    globalSoundOn = true;
+    setIsMuted(false);
   }, [currentIndex]);
 
   const closeGuide = () => {
@@ -94,29 +97,21 @@ const ReelsView = ({ onClose, onStartChat }) => {
   };
 
   // ---------------------------------------------------------
-  // [핵심] 영상 로딩 완료 핸들러 (숏츠 방식 구현)
+  // [핵심] 영상 로딩 완료 핸들러 (자동 소리 재생)
   // ---------------------------------------------------------
   const handleVideoLoad = () => {
     if (iframeRef.current) {
-      // 1. [재생] 일단 무조건 재생 명령부터 보냄 (영상 멈춤 방지 최우선)
+      // 1. [소리] 자동으로 소리 켜기
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
+        '*'
+      );
+
+      // 2. [재생] 재생 명령 전송
       iframeRef.current.contentWindow.postMessage(
         JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
         '*'
       );
-
-      // 2. [소리] 전역 상태 확인
-      if (globalSoundOn) {
-        // 사용자가 이전에 소리를 켰다면 -> 즉시 소리 켬 (연속 재생)
-        // iframe을 재활용했기 때문에 아이폰도 이걸 막지 않음!
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
-        );
-      } else {
-        // 아직 소리를 안 켰거나 껐다면 -> 소리 끔
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*'
-        );
-      }
     }
   };
 
@@ -285,7 +280,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
               ref={iframeRef}
               className="absolute inset-0 w-full h-full pointer-events-none"
               // mute=1 (초기 로딩은 무조건 무음) - onLoad에서 JS로 풉니다.
-              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1&origin=${window.location.origin}`}
+              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=0&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1&origin=${window.location.origin}`}
               title={currentVlog.username}
               allow="autoplay; encrypted-media"
               allowFullScreen
