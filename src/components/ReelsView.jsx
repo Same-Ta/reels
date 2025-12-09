@@ -96,12 +96,22 @@ const ReelsView = ({ onClose, onStartChat }) => {
     setIsMuted(!wantSound);
     localStorage.setItem('reelsSoundOn', String(wantSound));
 
-    // 음소거 토글만 수행 (재생은 건드리지 않음)
+    // 음소거 토글
     const command = wantSound ? 'unMute' : 'mute';
     iframeRef.current.contentWindow.postMessage(
       JSON.stringify({ event: 'command', func: command, args: [] }),
       '*'
     );
+    
+    // 음소거 토글 후 반드시 재생 보장 (50ms 후)
+    setTimeout(() => {
+      if (iframeRef.current) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
+          '*'
+        );
+      }
+    }, 50);
   };
 
   // ---------------------------------------------------------
