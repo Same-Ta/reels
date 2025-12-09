@@ -20,6 +20,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 // 전역 변수 (기본값: 무음)
 let globalSoundOn = false; 
 
+// eslint-disable-next-line no-unused-vars
 const ReelsView = ({ onClose, onStartChat }) => {
   const [shuffledVlogs] = useState(() => {
     const array = [...vlogDataDefault];
@@ -59,12 +60,9 @@ const ReelsView = ({ onClose, onStartChat }) => {
   // 터치 좌표
   const touchStartRef = useRef({ x: 0, y: 0 });
   const isSwipingRef = useRef(false);
-  // [핵심] 터치/클릭 중복 방지를 위한 타임스탬프
-  const lastTouchTimeRef = useRef(0);
 
   // [수정 1] 영상 변경 시: 전역 설정(사용자가 소리 켰는지)을 따라감
-  // 단, 첫 진입 시(globalSoundOn이 false일 때)는 확실하게 무음 처리
-  useEffect(() => {
+  React.useLayoutEffect(() => {
     setIsMuted(!globalSoundOn);
   }, [currentIndex]);
 
@@ -141,32 +139,32 @@ const ReelsView = ({ onClose, onStartChat }) => {
   // [통합 터치/클릭 시스템] (PC & 모바일 완벽 호환)
   // ---------------------------------------------------------
   
-  const goToNext = () => {
+  const goToNext = React.useCallback(() => {
     if (currentIndex < shuffledVlogs.length - 1 && !isTransitioning) {
       setIsTransitioning(true);
       setCurrentIndex(prev => prev + 1);
       setTimeout(() => setIsTransitioning(false), 300);
     }
-  };
+  }, [currentIndex, shuffledVlogs.length, isTransitioning]);
 
-  const goToPrev = () => {
+  const goToPrev = React.useCallback(() => {
     if (currentIndex > 0 && !isTransitioning) {
       setIsTransitioning(true);
       setCurrentIndex(prev => prev - 1);
       setTimeout(() => setIsTransitioning(false), 300);
     }
-  };
+  }, [currentIndex, isTransitioning]);
 
-  const handleTouchStart = (e) => {
+  const handleTouchStart = React.useCallback((e) => {
     if (showChatModal || chatMode) return;
     touchStartRef.current = {
       x: e.touches[0].clientX,
       y: e.touches[0].clientY
     };
     isSwipingRef.current = false;
-  };
+  }, [showChatModal, chatMode]);
 
-  const handleTouchMove = (e) => {
+  const handleTouchMove = React.useCallback((e) => {
     if (showChatModal || chatMode) return;
     if(e.cancelable) e.preventDefault(); // 갤럭시 스크롤 간섭 해결
     
@@ -175,9 +173,9 @@ const ReelsView = ({ onClose, onStartChat }) => {
     if (Math.abs(touchStartRef.current.y - currentY) > 10) {
       isSwipingRef.current = true;
     }
-  };
+  }, [showChatModal, chatMode]);
 
-  const handleTouchEnd = (e) => {
+  const handleTouchEnd = React.useCallback((e) => {
     if (showChatModal || chatMode) return;
     
     const endY = e.changedTouches[0].clientY;
@@ -188,7 +186,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
       else goToPrev();
     }
     // 탭 동작은 onClick에서 처리 (중복 실행 방지)
-  };
+  }, [showChatModal, chatMode, goToNext, goToPrev]);
 
   // [핵심 수정 4] 클릭 핸들러: 이벤트 전파 완벽 차단
   const handleOverlayClick = (e) => {
@@ -224,7 +222,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
       container.removeEventListener('touchmove', onTouchMove);
       container.removeEventListener('touchend', onTouchEnd);
     };
-  }, [showChatModal, chatMode, currentIndex, isTransitioning]); 
+  }, [showChatModal, chatMode, currentIndex, isTransitioning, handleTouchStart, handleTouchMove, handleTouchEnd]); 
 
   // 키보드/휠 이벤트 (PC용)
   useEffect(() => {
@@ -240,7 +238,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, isTransitioning, showChatModal, chatMode]);
+  }, [currentIndex, isTransitioning, showChatModal, chatMode, goToNext, goToPrev, onClose]);
 
   useEffect(() => {
     const handleWheel = (e) => {
@@ -252,12 +250,12 @@ const ReelsView = ({ onClose, onStartChat }) => {
     const container = containerRef.current;
     if (container) container.addEventListener('wheel', handleWheel, { passive: false });
     return () => { if (container) container.removeEventListener('wheel', handleWheel); };
-  }, [currentIndex, isTransitioning, showChatModal, chatMode]);
+  }, [currentIndex, isTransitioning, showChatModal, chatMode, goToNext, goToPrev]);
 
   // DB 저장 함수들 (기존 유지)
   const saveOneOnOneClick = async () => { if (!selectedMentor) return; try { await addDoc(collection(db, 'oneOnOneClicks'), { mentorId: selectedMentor.id, mentorName: selectedMentor.username, mentorRole: selectedMentor.role, userId: auth.currentUser?.uid || 'anonymous', amount: 20000, status: 'clicked', createdAt: serverTimestamp() }); } catch (error) { console.error('Error', error); } };
   const saveTemplateQuestion = async () => { if (!selectedMentor) return; try { await addDoc(collection(db, 'templateQuestions'), { mentorId: selectedMentor.id, mentorName: selectedMentor.username, mentorRole: selectedMentor.role, userId: auth.currentUser?.uid || 'anonymous', questionSummary: questionSummary, questionDetail: questionDetail, email: email, status: 'pending', createdAt: serverTimestamp() }); } catch (error) { console.error('Error', error); } };
-  const toggleInterest = async (id) => { const newState = !interested[id]; if (!auth.currentUser) { alert('로그인이 필요합니다.'); return; } setInterested(prev => ({ ...prev, [id]: newState })); if (newState) { try { await addDoc(collection(db, 'bookmarks'), { userId: auth.currentUser.uid, vlogId: id, vlogData: currentVlog, createdAt: serverTimestamp() }); } catch (error) { setInterested(prev => ({ ...prev, [id]: false })); } } };
+  const toggleInterest = async (id) => { const newState = !interested[id]; if (!auth.currentUser) { alert('로그인이 필요합니다.'); return; } setInterested(prev => ({ ...prev, [id]: newState })); if (newState) { try { await addDoc(collection(db, 'bookmarks'), { userId: auth.currentUser.uid, vlogId: id, vlogData: currentVlog, createdAt: serverTimestamp() }); } catch { setInterested(prev => ({ ...prev, [id]: false })); } } };
 
   const currentVlog = shuffledVlogs[currentIndex];
 
