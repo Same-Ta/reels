@@ -17,8 +17,7 @@ import vlogDataDefault from '../data/vlogData';
 import { db, auth } from '../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
-// [중요] 사용자가 소리를 켰는지 기억하는 변수 (기본값: 무음)
-// 정책상 첫 진입은 무조건 무음이어야 영상이 재생됩니다.
+// 전역 변수 (기본값: 무음)
 let globalSoundOn = false; 
 
 const ReelsView = ({ onClose, onStartChat }) => {
@@ -63,9 +62,9 @@ const ReelsView = ({ onClose, onStartChat }) => {
   // [핵심] 터치/클릭 중복 방지를 위한 타임스탬프
   const lastTouchTimeRef = useRef(0);
 
-  // 영상 변경 시 UI 상태 업데이트
+  // [수정 1] 영상 변경 시: 전역 설정(사용자가 소리 켰는지)을 따라감
+  // 단, 첫 진입 시(globalSoundOn이 false일 때)는 확실하게 무음 처리
   useEffect(() => {
-    // 다음 영상으로 넘어가면 전역 설정(사용자가 소리 켰는지)을 따라감
     setIsMuted(!globalSoundOn);
   }, [currentIndex]);
 
@@ -74,8 +73,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
     localStorage.setItem('hasSeenReelsGuide', 'true');
   };
 
-  // [핵심 1] 소리 토글: "재생 샌드위치" 전략
-  // 버튼을 누르면 영상이 멈추지 않게 앞뒤로 재생 명령을 감쌉니다.
+  // [핵심 수정 2] 갤럭시 멈춤 해결: "강력한 재생 샌드위치"
   const toggleSound = () => {
     if (!iframeRef.current) return;
 
@@ -84,41 +82,31 @@ const ReelsView = ({ onClose, onStartChat }) => {
     globalSoundOn = wantSound;
     setIsMuted(!wantSound);
 
-<<<<<<< HEAD
-    // 2. [선제공격] 일단 재생 명령 (멈춤 방지)
+    const command = wantSound ? 'unMute' : 'mute';
+
+    // 2. 명령어 전송 (갤럭시 필승 전략)
+    // (1) 선제 재생: 멈춰있을지 모르니 일단 재생
     iframeRef.current.contentWindow.postMessage(
       JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
     );
 
-    // 3. [본론] 소리 설정 변경
-=======
-    // 음소거 토글
->>>>>>> 7056b63dae32727f06be3489d83dc55de7716919
-    const command = wantSound ? 'unMute' : 'mute';
+    // (2) 소리 변경
     iframeRef.current.contentWindow.postMessage(
       JSON.stringify({ event: 'command', func: command, args: [] }), '*'
     );
 
-    // 4. [확인사살] 소리 바꾸면서 멈췄을까봐 다시 재생 명령
-    // (딜레이 없이 바로 보내야 모바일 브라우저가 사용자 터치로 인정함)
-    iframeRef.current.contentWindow.postMessage(
-      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
-    );
-    
-    // 음소거 토글 후 반드시 재생 보장 (50ms 후)
+    // (3) 후속 재생: 소리 변경 시 갤럭시가 영상을 멈추는 버그를 막기 위해
+    // 0.05초 뒤에 다시 한번 "재생해!"라고 명령을 보냄 (setTimeout 필수)
     setTimeout(() => {
       if (iframeRef.current) {
         iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }),
-          '*'
+          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
         );
       }
     }, 50);
   };
 
-  // ---------------------------------------------------------
-  // [핵심 2] 영상 로딩 완료 시 처리
-  // ---------------------------------------------------------
+  // [핵심 수정 3] 영상 로딩 완료 시 처리
   const handleVideoLoad = () => {
     if (!iframeRef.current) return;
 
@@ -129,12 +117,15 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
     // 2. 사용자가 이전에 소리를 켰다면? (globalSoundOn === true)
     if (globalSoundOn) {
-      // 살짝 늦게 소리를 켜서(unMute) 아이폰/갤럭시의 차단을 회피
-      // iframe을 재활용(key 제거)했으므로 이 방식이 통함
+      // 바로 켜지 말고 0.5초 뒤에 켬 (아이폰/갤럭시 로딩 충돌 방지)
       setTimeout(() => {
         if(iframeRef.current) {
           iframeRef.current.contentWindow.postMessage(
             JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
+          );
+          // 소리 켜면서 멈출까봐 재생 명령 한 번 더
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
           );
         }
       }, 500); 
@@ -199,9 +190,10 @@ const ReelsView = ({ onClose, onStartChat }) => {
     // 탭 동작은 onClick에서 처리 (중복 실행 방지)
   };
 
-  // [클릭 핸들러]
+  // [핵심 수정 4] 클릭 핸들러: 이벤트 전파 완벽 차단
   const handleOverlayClick = (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // 부모로 이벤트 전파 중단
+    e.preventDefault();  // 브라우저 기본 동작(더블탭 확대 등) 중단
     
     // 스와이프 중이었다면 클릭 무시
     if (isSwipingRef.current) {
@@ -301,18 +293,13 @@ const ReelsView = ({ onClose, onStartChat }) => {
           }}
         >
           {/* YouTube iframe */}
-          <div className="absolute inset-0 w-full h-full overflow-hidden rounded-xl">
-            {/* ★★★ [가장 중요] key를 제거하여 iframe을 재활용합니다. ★★★ 
-               이렇게 해야 아이폰에서 영상이 바뀌어도 "같은 플레이어"로 인식해서 
-               소리 권한을 유지해줍니다.
-            */}
-            {/* ★ Key 없음: iframe 재활용 (중요) */}
+          <div className="absolute inset-0 w-full h-full overflow-hidden">
+            {/* ★ Key 제거됨 (iframe 재활용) */}
             <iframe 
               ref={iframeRef}
               className="absolute inset-0 w-full h-full pointer-events-none object-cover"
-              style={{ transform: 'scale(1.35)' }}
-              // ★ mute=1 (무음 시작) : 이것이 안정성의 핵심입니다. 
-              // 터치하면 소리가 켜지고, 그 상태가 유지됩니다.
+              style={{ transform: 'scale(1.35)', pointerEvents: 'none' }} // pointerEvents: none 추가 (확실한 클릭 방지)
+              // mute=1, autoplay=1 (필수)
               src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1&origin=${window.location.origin}`}
               title={currentVlog.username}
               allow="autoplay; encrypted-media"
@@ -321,15 +308,13 @@ const ReelsView = ({ onClose, onStartChat }) => {
             />
           </div>
 
-          {/* 소리 켜기/끄기 오버레이 버튼 
-              - onClick으로 작동 (PC 호환)
-              - 모바일은 handleOverlayClick 내부에서 스와이프 체크
-              - z-50으로 YouTube 컨트롤을 완전히 덮음
+          {/* ★ 소리 켜기/끄기 오버레이 버튼 
+              - bg-transparent: 클릭 관통 방지
+              - onClick: toggleSound 실행
           */}
           <div 
-            className="absolute inset-0 z-50 flex items-center justify-center cursor-pointer" 
+            className="absolute inset-0 z-10 w-full h-full bg-transparent flex items-center justify-center cursor-pointer" 
             onClick={handleOverlayClick}
-            style={{ touchAction: 'none' }}
           >
             {/* 소리 꺼진 상태(isMuted=true)일 때만 아이콘 표시 */}
             {isMuted && (
