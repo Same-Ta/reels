@@ -2,8 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   MessageCircle, 
   Send, 
-  Phone,
-  Video,
   User,
   MoreHorizontal,
   Briefcase,
@@ -152,15 +150,10 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
             </div>
             <div>
               <h2 className="font-bold text-gray-800 text-sm sm:text-lg">{activeChat.vloggerName}</h2>
-              <p className="text-[10px] sm:text-xs text-green-600 font-medium flex items-center gap-1">
-                <span className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full"></span>
-                AI Assistant Online
-              </p>
+              <p className="text-[10px] sm:text-xs text-gray-500">{activeChat.vloggerRole || vlogInfo.role}</p>
             </div>
           </div>
           <div className="hidden sm:flex gap-4 text-gray-400">
-            <button className="hover:text-gray-600 transition"><Phone size={20} /></button>
-            <button className="hover:text-gray-600 transition"><Video size={20} /></button>
             <button className="hover:text-gray-600 transition"><MoreHorizontal size={20} /></button>
           </div>
         </div>
