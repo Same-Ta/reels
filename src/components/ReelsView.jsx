@@ -95,28 +95,17 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const handleVideoLoad = () => {
     if (!iframeRef.current) return;
 
-    // 1. 일단 무조건 재생 (가장 중요)
+    // 1. 무조건 재생
     iframeRef.current.contentWindow.postMessage(
       JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
     );
 
-    // 2. 사용자가 이전에 소리를 켰다면? (globalSoundOn === true)
-    if (globalSoundOn) {
-      // 살짝 늦게 소리를 켜서(unMute) 아이폰/갤럭시의 차단을 회피
-      // iframe을 재활용(key 제거)했으므로 이 방식이 통함
-      setTimeout(() => {
-        if(iframeRef.current) {
-          iframeRef.current.contentWindow.postMessage(
-            JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
-          );
-        }
-      }, 500); 
-    } else {
-      // 소리를 안 켰다면 확실히 끔
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*'
-      );
-    }
+    // 2. 볼륨 설정 (mute/unMute 대신 setVolume 사용)
+    // globalSoundOn 상태에 따라 볼륨 0 또는 100 설정
+    const volume = globalSoundOn ? 100 : 0;
+    iframeRef.current.contentWindow.postMessage(
+      JSON.stringify({ event: 'command', func: 'setVolume', args: [volume] }), '*'
+    );
   };
 
   // ---------------------------------------------------------
