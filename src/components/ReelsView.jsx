@@ -80,26 +80,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const closeGuide = () => {
     setShowGuide(false);
     localStorage.setItem('hasSeenReelsGuide', 'true');
-    
-    // [중요] 가이드 종료 = 사용자 상호작용 → 음소거 해제
-    // 이 순간부터 모든 영상이 소리와 함께 자동재생됨
-    globalSoundOn = true;
-    setIsMuted(false);
-    localStorage.setItem('reelsSoundOn', 'true'); // 음소거 해제 상태 저장
-    
-    // 현재 영상 즉시 음소거 해제
-    if (iframeRef.current) {
-      setTimeout(() => {
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
-          '*'
-        );
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
-          '*'
-        );
-      }, 100); // 약간의 딜레이로 안정성 확보
-    }
+    // 가이드만 닫고 음소거는 사용자가 직접 해제하도록 함
   };
 
   // [소리 토글] 사용자가 화면을 탭했을 때 실행
