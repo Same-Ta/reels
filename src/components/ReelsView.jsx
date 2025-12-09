@@ -94,18 +94,20 @@ const ReelsView = ({ onClose, onStartChat }) => {
       setIsMuted(!wantSound);    // UI 업데이트
       localStorage.setItem('reelsSoundOn', String(wantSound)); // 음소거 상태 저장
       
-      // 명령어 전송
-      const command = wantSound ? 'unMute' : 'mute';
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: command, args: [] }), 
-        '*'
-      );
-      
-      // 재생 명령 (멈춤 방지 - 특히 Android Chrome에서 중요)
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
-        '*'
-      );
+      // 음소거 상태에 따라 명령 전송
+      if (wantSound) {
+        // 소리 켜기
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
+          '*'
+        );
+      } else {
+        // 소리 끄기
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'mute', args: [] }), 
+          '*'
+        );
+      }
     } catch (error) {
       console.error('Sound toggle error:', error);
     }
