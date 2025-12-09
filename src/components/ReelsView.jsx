@@ -69,55 +69,90 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const closeGuide = () => {
     setShowGuide(false);
     localStorage.setItem('hasSeenReelsGuide', 'true');
+    
+    // [중요] 가이드 종료 = 사용자 상호작용 → 음소거 해제
+    // 이 순간부터 모든 영상이 소리와 함께 자동재생됨
+    globalSoundOn = true;
+    setIsMuted(false);
+    
+    // 현재 영상 즉시 음소거 해제
+    if (iframeRef.current) {
+      setTimeout(() => {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
+          '*'
+        );
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+          '*'
+        );
+      }, 100); // 약간의 딜레이로 안정성 확보
+    }
   };
 
   // [소리 토글] 사용자가 화면을 탭했을 때 실행
   const toggleSound = () => {
     if (!iframeRef.current) return;
     
-    // 상태 뒤집기
-    const wantSound = !globalSoundOn;
-    globalSoundOn = wantSound; // 전역 변수 업데이트
-    setIsMuted(!wantSound);    // UI 업데이트
-    
-    // 명령어 전송
-    const command = wantSound ? 'unMute' : 'mute';
-    iframeRef.current.contentWindow.postMessage(
-      JSON.stringify({ event: 'command', func: command, args: [] }), 
-      '*'
-    );
-    // 소리 켜면서 재생도 확실하게 (멈춤 방지)
-    iframeRef.current.contentWindow.postMessage(
-      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
-      '*'
-    );
+    try {
+      // 상태 뒤집기
+      const wantSound = !globalSoundOn;
+      globalSoundOn = wantSound; // 전역 변수 업데이트 (다음 영상에도 유지)
+      setIsMuted(!wantSound);    // UI 업데이트
+      
+      // 명령어 전송
+      const command = wantSound ? 'unMute' : 'mute';
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: command, args: [] }), 
+        '*'
+      );
+      
+      // 재생 명령 (멈춤 방지 - 특히 Android Chrome에서 중요)
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+        '*'
+      );
+    } catch (error) {
+      console.error('Sound toggle error:', error);
+    }
   };
 
   // ---------------------------------------------------------
   // [핵심] 영상 로딩 완료 핸들러 (숏츠 방식 구현)
   // ---------------------------------------------------------
   const handleVideoLoad = () => {
-    if (iframeRef.current) {
-      // 1. [재생] 일단 무조건 재생 명령부터 보냄 (영상 멈춤 방지 최우선)
-      iframeRef.current.contentWindow.postMessage(
-        JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
-        '*'
-      );
+    if (!iframeRef.current) return;
+    
+    // 약간의 딜레이를 주어 iframe API가 완전히 로드되도록 함
+    setTimeout(() => {
+      if (!iframeRef.current) return;
+      
+      try {
+        // 1. [재생] 일단 무조건 재생 명령부터 보냄 (영상 멈춤 방지 최우선)
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), 
+          '*'
+        );
 
-      // 2. [소리] 전역 상태 확인
-      if (globalSoundOn) {
-        // 사용자가 이전에 소리를 켰다면 -> 즉시 소리 켬 (연속 재생)
-        // iframe을 재활용했기 때문에 아이폰도 이걸 막지 않음!
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
-        );
-      } else {
-        // 아직 소리를 안 켰거나 껐다면 -> 소리 끔
-        iframeRef.current.contentWindow.postMessage(
-          JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*'
-        );
+        // 2. [소리] 전역 상태 확인
+        if (globalSoundOn) {
+          // 사용자가 이전에 소리를 켰다면 -> 즉시 소리 켬 (연속 재생)
+          // iframe을 재활용했기 때문에 iOS Safari도 이걸 허용함!
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'unMute', args: [] }), 
+            '*'
+          );
+        } else {
+          // 아직 소리를 안 켰거나 껐다면 -> 소리 끔 (자동재생 정책 준수)
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'mute', args: [] }), 
+            '*'
+          );
+        }
+      } catch (error) {
+        console.error('Video control error:', error);
       }
-    }
+    }, 50); // 50ms 딜레이로 안정성 확보
   };
 
   // ---------------------------------------------------------
@@ -285,9 +320,10 @@ const ReelsView = ({ onClose, onStartChat }) => {
               ref={iframeRef}
               className="absolute inset-0 w-full h-full pointer-events-none"
               // mute=1 (초기 로딩은 무조건 무음) - onLoad에서 JS로 풉니다.
-              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1&origin=${window.location.origin}`}
+              // playsinline=1 (iOS Safari 필수), enablejsapi=1 (제어 API 활성화)
+              src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1&origin=${window.location.origin}&widget_referrer=${window.location.origin}`}
               title={currentVlog.username}
-              allow="autoplay; encrypted-media"
+              allow="autoplay; encrypted-media; gyroscope; accelerometer"
               allowFullScreen
               onLoad={handleVideoLoad}
             />
