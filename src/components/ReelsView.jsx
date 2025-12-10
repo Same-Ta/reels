@@ -311,11 +311,10 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
           {/* 소리 켜기/끄기 오버레이 버튼 - 하단 영역 완전 제외 */}
           <div 
-            className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center cursor-pointer" 
+            className="absolute top-0 left-0 right-0 bottom-40 z-10 flex items-center justify-center cursor-pointer" 
             onClick={handleOverlayClick}
             style={{ 
-              touchAction: 'none',
-              bottom: '240px' // 하단 240px는 오버레이가 차지하지 않음
+              touchAction: 'none'
             }}
           >
             {/* 소리 꺼진 상태(isMuted=true)일 때만 아이콘 표시 */}
@@ -359,31 +358,32 @@ const ReelsView = ({ onClose, onStartChat }) => {
 
               <div className="flex gap-2 pointer-events-auto">
                 <button 
-                  onTouchStart={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                  }}
                   onTouchEnd={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                  }}
-                  onClick={(e) => {
                     e.stopPropagation();
                     e.preventDefault();
                     setSelectedMentor(currentVlog);
                     setChatMode('select');
                   }}
-                  className="flex-1 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-lg active:scale-95 text-xs touch-manipulation"
-                  style={{ WebkitTapHighlightColor: 'transparent', pointerEvents: 'auto' }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedMentor(currentVlog);
+                    setChatMode('select');
+                  }}
+                  className="flex-1 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 text-sm touch-manipulation"
+                  style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
-                  <MessageCircle size={16} />
+                  <MessageCircle size={18} />
                   이 직무에 대해 질문하기
                 </button>
                 <button 
-                  onTouchEnd={(e) => e.stopPropagation()}
+                  onTouchEnd={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    toggleInterest(currentVlog.id);
+                  }}
                   onClick={(e) => {
-                      e.stopPropagation();
-                      toggleInterest(currentVlog.id);
+                    e.stopPropagation();
+                    toggleInterest(currentVlog.id);
                   }}
                   className={`px-4 py-2 rounded-lg transition-all active:scale-95 backdrop-blur-sm flex items-center gap-1.5 text-xs font-bold shadow-lg ${
                     interested[currentVlog.id] 
@@ -397,7 +397,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
                   ) : (
                     <Bookmark size={16} />
                   )}
-                  {interested[currentVlog.id] ? '저장됨' : '저장'}
+                  <span className="text-sm font-medium">{interested[currentVlog.id] ? '저장됨' : '저장'}</span>
                 </button>
               </div>
             </div>
