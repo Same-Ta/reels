@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db, auth, appId } from '../config/firebase';
 import { TrendingUp, Bookmark, MessageCircle, Menu, Play, BarChart3, Activity } from 'lucide-react';
@@ -98,14 +98,23 @@ const Dashboard = ({ onViewReels, onToggleSidebar, onOpenChat, onViewBookmarks, 
     };
   }, []);
 
-  const handleSelectChat = (chat) => {
+  const handleSelectChat = useCallback((chat) => {
     if (onOpenChat) {
       onOpenChat(chat);
     }
-  };
+  }, [onOpenChat]);
 
   // 최대값 계산 (그래프 정규화용)
-  const maxActivity = Math.max(...dailyActivity.map(d => d.count), 1);
+  const maxActivity = useMemo(() => 
+    Math.max(...dailyActivity.map(d => d.count), 1), 
+    [dailyActivity]
+  );
+
+  // 표시할 채팅 목록 메모이제이션
+  const displayChats = useMemo(() => chats.slice(0, 5), [chats]);
+  
+  // 표시할 북마크 목록 메모이제이션
+  const displayBookmarks = useMemo(() => bookmarks.slice(0, 8), [bookmarks]);
 
   return (
     <div className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 h-screen overflow-hidden">
@@ -117,7 +126,8 @@ const Dashboard = ({ onViewReels, onToggleSidebar, onOpenChat, onViewBookmarks, 
               {/* 모바일 햄버거 메뉴 */}
               <button 
                 onClick={onToggleSidebar}
-                className="sm:hidden p-2 hover:bg-gray-100 rounded-lg transition"
+                className="sm:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors relative z-20 active:bg-gray-200"
+                aria-label="메뉴 열기"
               >
                 <Menu size={24} className="text-gray-700" />
               </button>
@@ -184,7 +194,7 @@ const Dashboard = ({ onViewReels, onToggleSidebar, onOpenChat, onViewBookmarks, 
                   </div>
                 ) : (
                   <div className="flex-1 overflow-y-auto">
-                    {chats.slice(0, 5).map(chat => (
+                    {displayChats.map(chat => (
                       <div
                         key={chat.id}
                         onClick={() => handleSelectChat(chat)}
@@ -381,7 +391,7 @@ const Dashboard = ({ onViewReels, onToggleSidebar, onOpenChat, onViewBookmarks, 
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-6">
-                  {bookmarks.slice(0, 8).map((bookmark, index) => {
+                  {displayBookmarks.map((bookmark, index) => {
                     const vlog = bookmark.vlogInfo;
                     if (!vlog) return null;
                     

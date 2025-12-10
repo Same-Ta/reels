@@ -136,9 +136,10 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
             {/* 모바일 햄버거 메뉴 버튼 - 항상 표시 */}
             <button 
               onClick={onToggleSidebar}
-              className="sm:hidden p-2 hover:bg-gray-100 rounded-full transition"
+              className="sm:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors relative z-20 active:bg-gray-200"
+              aria-label="메뉴 열기"
             >
-              <Menu size={20} className="text-gray-600" />
+              <Menu size={24} className="text-gray-700" />
             </button>
             <div className="relative">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
