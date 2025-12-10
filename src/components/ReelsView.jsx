@@ -71,8 +71,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
     localStorage.setItem('hasSeenReelsGuide', 'true');
   };
 
-  // [최종 해결] 갤럭시 멈춤 완전 해결: mute/unMute 제거, setVolume만 사용
-  // mute/unMute는 갤럭시에서 player를 pause 상태로 만들어버림
+  // [핵심 수정 2] 갤럭시 멈춤 해결: "강력한 재생 샌드위치"
   const toggleSound = () => {
     if (!iframeRef.current) return;
 
@@ -80,13 +79,29 @@ const ReelsView = ({ onClose, onStartChat }) => {
     const wantSound = !globalSoundOn;
     globalSoundOn = wantSound;
     setIsMuted(!wantSound);
-    localStorage.setItem('reelsSoundOn', String(wantSound));
 
-    // 2. setVolume만 사용 (재생 상태 유지)
-    const volume = wantSound ? 100 : 0;
+    const command = wantSound ? 'unMute' : 'mute';
+
+    // 2. 명령어 전송 (갤럭시 필승 전략)
+    // (1) 선제 재생: 멈춰있을지 모르니 일단 재생
     iframeRef.current.contentWindow.postMessage(
-      JSON.stringify({ event: 'command', func: 'setVolume', args: [volume] }), '*'
+      JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
     );
+
+    // (2) 소리 변경
+    iframeRef.current.contentWindow.postMessage(
+      JSON.stringify({ event: 'command', func: command, args: [] }), '*'
+    );
+
+    // (3) 후속 재생: 소리 변경 시 갤럭시가 영상을 멈추는 버그를 막기 위해
+    // 0.05초 뒤에 다시 한번 "재생해!"라고 명령을 보냄 (setTimeout 필수)
+    setTimeout(() => {
+      if (iframeRef.current) {
+        iframeRef.current.contentWindow.postMessage(
+          JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
+        );
+      }
+    }, 50);
   };
 
   // ---------------------------------------------------------
@@ -95,17 +110,28 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const handleVideoLoad = () => {
     if (!iframeRef.current) return;
 
-    // 1. 무조건 재생
+    // 1. 일단 무조건 재생 (가장 중요)
     iframeRef.current.contentWindow.postMessage(
       JSON.stringify({ event: 'command', func: 'playVideo', args: [] }), '*'
     );
 
-    // 2. 볼륨 설정 (mute/unMute 대신 setVolume 사용)
-    // globalSoundOn 상태에 따라 볼륨 0 또는 100 설정
-    const volume = globalSoundOn ? 100 : 0;
-    iframeRef.current.contentWindow.postMessage(
-      JSON.stringify({ event: 'command', func: 'setVolume', args: [volume] }), '*'
-    );
+    // 2. 사용자가 이전에 소리를 켰다면? (globalSoundOn === true)
+    if (globalSoundOn) {
+      // 살짝 늦게 소리를 켜서(unMute) 아이폰/갤럭시의 차단을 회피
+      // iframe을 재활용(key 제거)했으므로 이 방식이 통함
+      setTimeout(() => {
+        if(iframeRef.current) {
+          iframeRef.current.contentWindow.postMessage(
+            JSON.stringify({ event: 'command', func: 'unMute', args: [] }), '*'
+          );
+        }
+      }, 500); 
+    } else {
+      // 소리를 안 켰다면 확실히 끔
+      iframeRef.current.contentWindow.postMessage(
+        JSON.stringify({ event: 'command', func: 'mute', args: [] }), '*'
+      );
+    }
   };
 
   // ---------------------------------------------------------
@@ -283,13 +309,13 @@ const ReelsView = ({ onClose, onStartChat }) => {
             />
           </div>
 
-          {/* 소리 켜기/끄기 오버레이 버튼 - 하단 영역 완전히 제외 */}
+          {/* 소리 켜기/끄기 오버레이 버튼 - 하단 영역 제외 */}
           <div 
-            className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center cursor-pointer" 
+            className="absolute inset-0 z-20 flex items-center justify-center cursor-pointer" 
             onClick={handleOverlayClick}
             style={{ 
               touchAction: 'none',
-              bottom: '220px' // 하단 220px는 완전히 비워둠
+              paddingBottom: '200px' // 하단 정보 영역만큼 패딩 추가
             }}
           >
             {/* 소리 꺼진 상태(isMuted=true)일 때만 아이콘 표시 */}
