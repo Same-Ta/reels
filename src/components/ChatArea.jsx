@@ -157,11 +157,11 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
   const vlogInfo = VLOG_DATA.find(v => v.id === displayChat.vloggerId) || {};
 
   return (
-    <div className="flex-1 flex h-full bg-[#f3f4f6] overflow-hidden relative">
+    <div className="flex-1 flex h-full bg-[#f3f4f6] relative">
       {/* Chat Messages Area */}
-      <div className="flex-1 flex flex-col h-full">
-        {/* Header - 절대 고정 */}
-        <div className="h-14 sm:h-20 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-8 shadow-sm z-50 flex-shrink-0">
+      <div className="flex-1 flex flex-col h-full relative">
+        {/* Header - 절대 고정 (position fixed 사용) */}
+        <div className="absolute top-0 left-0 right-0 h-14 sm:h-20 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-8 shadow-sm z-50">
           <div className="flex items-center gap-2 sm:gap-4">
             {/* 모바일 햄버거 메뉴 버튼 - 항상 표시 */}
             <button 
@@ -187,8 +187,9 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
           </div>
         </div>
 
-        {/* Messages Body - 스크롤 가능 영역 */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-8 space-y-4 sm:space-y-6 min-h-0">
+        {/* Messages Body - 스크롤 가능 영역 (헤더/푸터 사이) */}
+        <div className="absolute top-14 sm:top-20 bottom-0 left-0 right-0 overflow-y-auto">
+          <div className="p-3 sm:p-8 space-y-4 sm:space-y-6 pb-32">
           {/* Date Separator (Mock) */}
           <div className="flex justify-center">
             <span className="text-[10px] text-gray-400 bg-gray-200/50 px-3 py-1 rounded-full">Today</span>
@@ -220,10 +221,11 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
           })}
           
           <div ref={messagesEndRef} />
+          </div>
         </div>
 
-        {/* 하단 고정 영역 (추천 질문 + 입력창) */}
-        <div className="flex-shrink-0">
+        {/* 하단 고정 영역 (추천 질문 + 입력창) - position fixed로 완전 고정 */}
+        <div className="absolute bottom-0 left-0 right-0 z-40">
           {/* 추천 질문 영역 */}
           {suggestedQuestions.length > 0 && (
             <div className="px-3 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-50 to-blue-50 border-t border-gray-100">
@@ -247,7 +249,7 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
           )}
 
           {/* Input Area - 절대 고정 */}
-          <div className="p-3 sm:p-6 bg-white border-t border-gray-100 z-40">
+          <div className="p-3 sm:p-6 bg-white border-t border-gray-100">
           <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3 bg-gray-50 p-1.5 sm:p-2 rounded-2xl border border-gray-200 focus-within:ring-2 focus-within:ring-green-100 focus-within:border-green-400 transition-all">
             <button type="button" className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200/50 transition">
                <span className="text-base sm:text-xl">☺</span>
