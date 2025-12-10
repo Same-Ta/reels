@@ -160,8 +160,8 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
     <div className="flex-1 flex h-full overflow-hidden bg-[#f3f4f6]">
       {/* Chat Messages Area */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Header */}
-        <div className="h-14 sm:h-20 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-8 shadow-sm z-10">
+        {/* Header - 고정 */}
+        <div className="sticky top-0 h-14 sm:h-20 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-8 shadow-sm z-50 flex-shrink-0">
           <div className="flex items-center gap-2 sm:gap-4">
             {/* 모바일 햄버거 메뉴 버튼 - 항상 표시 */}
             <button 
@@ -244,8 +244,8 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
           </div>
         )}
 
-        {/* Input Area */}
-        <div className="p-3 sm:p-6 bg-white border-t border-gray-100">
+        {/* Input Area - 고정 */}
+        <div className="sticky bottom-0 p-3 sm:p-6 bg-white border-t border-gray-100 z-40 flex-shrink-0">
           <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3 bg-gray-50 p-1.5 sm:p-2 rounded-2xl border border-gray-200 focus-within:ring-2 focus-within:ring-green-100 focus-within:border-green-400 transition-all">
             <button type="button" className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200/50 transition">
                <span className="text-base sm:text-xl">☺</span>
