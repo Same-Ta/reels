@@ -43,6 +43,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const [questionDetail, setQuestionDetail] = useState('');
   const [email, setEmail] = useState('');
   const [selectedMentor, setSelectedMentor] = useState(null);
+  const [showChatAlert, setShowChatAlert] = useState(false);
   
   // 현재 UI상 소리 상태 (화면에 아이콘 띄울지 말지 결정)
   // 초기값: true (무음)
@@ -362,12 +363,12 @@ const ReelsView = ({ onClose, onStartChat }) => {
                     e.stopPropagation();
                     e.preventDefault();
                     setSelectedMentor(currentVlog);
-                    setChatMode('select');
+                    setShowChatAlert(true);
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
                     setSelectedMentor(currentVlog);
-                    setChatMode('select');
+                    setShowChatAlert(true);
                   }}
                   className="flex-1 py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 text-sm touch-manipulation"
                   style={{ WebkitTapHighlightColor: 'transparent' }}
@@ -407,37 +408,31 @@ const ReelsView = ({ onClose, onStartChat }) => {
       </div>
 
       {/* 모달들 (기존 코드 그대로 사용) */}
-      {chatMode === 'select' && (
-        <div className="absolute inset-0 z-60 bg-black flex flex-col">
-            <div className="flex items-center justify-between p-4 border-b border-gray-800">
-                <button onClick={() => { setChatMode(null); setTemplateStep(1); setQuestionSummary(''); setQuestionDetail(''); setEmail(''); }} className="p-2 hover:bg-gray-800 rounded-full">
-                    <ArrowLeft size={24} className="text-white" />
-                </button>
-                <h3 className="text-white font-bold text-lg">멘토에게 질문하기</h3>
-                <div className="w-10"></div>
+      {/* 채팅 시작 알림 팝업 */}
+      {showChatAlert && (
+        <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+            <div className="p-6">
+              <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-4">
+                <MessageCircle size={32} className="text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900 text-center mb-3">채팅으로 질문하기</h2>
+              <p className="text-gray-600 text-center text-sm mb-6">
+                첫 <span className="font-bold text-green-600">3회까지는 무료 질문</span>이 가능합니다.<br/>
+                추가 질문은 추가 결제가 필요합니다.
+              </p>
+              <button 
+                onClick={() => {
+                  setShowChatAlert(false);
+                  onStartChat(selectedMentor);
+                  setChatMode(null);
+                }}
+                className="w-full py-3 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white font-bold rounded-xl transition-all"
+              >
+                확인
+              </button>
             </div>
-            <div className="flex-1 flex flex-col p-4 overflow-y-auto">
-                <div className="w-full max-w-2xl mx-auto">
-                    <p className="text-gray-300 text-sm text-center mb-6 mt-4">{selectedMentor?.username}님에게 질문하는 방법을 선택하세요.</p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <button onClick={() => setChatMode('oneOnOneInfo')} className="p-5 bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-2 border-purple-500/30 rounded-xl text-center hover:border-purple-500/60 transition-all active:scale-95 flex flex-col items-center">
-                            <div className="w-16 h-16 rounded-full bg-purple-500/30 flex items-center justify-center mb-3"><MessageSquare size={32} className="text-purple-400" /></div>
-                            <h4 className="text-white font-bold text-xl mb-2">1:1 대화</h4>
-                            <span className="text-pink-400 font-bold text-lg mb-2">₩13,000</span>
-                            <p className="text-gray-400 text-sm mb-2">30분 정도의 자유로운 대화</p>
-                        </button>
-                        <button onClick={() => {
-                            onStartChat(selectedMentor);
-                            setChatMode(null);
-                        }} className="p-5 bg-gradient-to-br from-green-500/20 to-emerald-500/20 border-2 border-green-500/30 rounded-xl text-center hover:border-green-500/60 transition-all active:scale-95 flex flex-col items-center">
-                            <div className="w-16 h-16 rounded-full bg-green-500/30 flex items-center justify-center mb-3"><MessageSquare size={32} className="text-green-400" /></div>
-                            <h4 className="text-white font-bold text-xl mb-2">1회 무료 질문하기</h4>
-                            <span className="text-green-400 font-bold text-lg mb-2">무료 체험</span>
-                            <p className="text-gray-400 text-xs">실시간 채팅으로 1회 무료 질문이 가능합니다</p>
-                        </button>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
       )}
       
