@@ -289,12 +289,18 @@ const ReelsView = ({ onClose, onStartChat }) => {
       <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/90 via-black/70 to-transparent pt-2 pb-8 pointer-events-none">
         <div className="text-center px-4 pt-1">
           <p className="text-white/90 text-xs sm:text-sm font-medium">
-            영상이 재생되지 않을 시 다음 링크로 접속하시기 바랍니다
+            영상이 재생되지 않을 시 다음 링크로 접속하시기 바랍니다 (Chrome 브라우저 권장)
           </p>
           <a 
-            href="https://reels-one-jet.vercel.app/" 
+            href="googlechrome://navigate?url=https://reels-one-jet.vercel.app/" 
             target="_blank" 
             rel="noopener noreferrer"
+            onClick={() => {
+              // Chrome이 설치되지 않은 경우 일반 링크로 폴백
+              setTimeout(() => {
+                window.open('https://reels-one-jet.vercel.app/', '_blank');
+              }, 500);
+            }}
             className="text-blue-400 hover:text-blue-300 text-xs sm:text-sm underline mt-1 inline-block pointer-events-auto"
           >
             https://reels-one-jet.vercel.app/
