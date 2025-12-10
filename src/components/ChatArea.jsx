@@ -127,36 +127,36 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-[#f3f4f6]">
-      {/* Header - 고정 */}
-      <div className="h-14 sm:h-20 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-8 shadow-sm z-30 flex-shrink-0">
-        <div className="flex items-center gap-2 sm:gap-4">
-          {/* 모바일 햄버거 메뉴 버튼 - 항상 표시 */}
-          <button 
-            onClick={onToggleSidebar}
-            className="sm:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors relative z-20 active:bg-gray-200"
-            aria-label="메뉴 열기"
-          >
-            <Menu size={24} className="text-gray-700" />
-          </button>
-          <div className="relative">
-            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
-              {activeChat.vloggerName?.[0] || 'V'}
+    <div className="flex-1 flex h-full overflow-hidden bg-[#f3f4f6]">
+      {/* Chat Messages Area */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <div className="h-14 sm:h-20 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-8 shadow-sm z-10">
+          <div className="flex items-center gap-2 sm:gap-4">
+            {/* 모바일 햄버거 메뉴 버튼 - 항상 표시 */}
+            <button 
+              onClick={onToggleSidebar}
+              className="sm:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors relative z-20 active:bg-gray-200"
+              aria-label="메뉴 열기"
+            >
+              <Menu size={24} className="text-gray-700" />
+            </button>
+            <div className="relative">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
+                {activeChat.vloggerName?.[0] || 'V'}
+              </div>
+              <div className="absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
             </div>
-            <div className="absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
+            <div>
+              <h2 className="font-bold text-gray-800 text-sm sm:text-lg">{activeChat.vloggerName}</h2>
+              <p className="text-[10px] sm:text-xs text-gray-500">{activeChat.vloggerRole || vlogInfo.role}</p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-bold text-gray-800 text-sm sm:text-lg">{activeChat.vloggerName}</h2>
-            <p className="text-[10px] sm:text-xs text-gray-500">{activeChat.vloggerRole || vlogInfo.role}</p>
+          <div className="hidden sm:flex gap-4 text-gray-400">
+            <button className="hover:text-gray-600 transition"><MoreHorizontal size={20} /></button>
           </div>
         </div>
-        <div className="hidden sm:flex gap-4 text-gray-400">
-          <button className="hover:text-gray-600 transition"><MoreHorizontal size={20} /></button>
-        </div>
-      </div>
 
-      {/* Messages Container */}
-      <div className="flex-1 flex flex-col overflow-hidden">
         {/* Messages Body */}
         <div className="flex-1 overflow-y-auto p-3 sm:p-8 space-y-4 sm:space-y-6">
           {/* Date Separator (Mock) */}
@@ -214,8 +214,8 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
           </div>
         )}
 
-        {/* Input Area - 고정 */}
-        <div className="p-3 sm:p-6 bg-white border-t border-gray-100 z-20 flex-shrink-0">
+        {/* Input Area */}
+        <div className="p-3 sm:p-6 bg-white border-t border-gray-100">
           <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3 bg-gray-50 p-1.5 sm:p-2 rounded-2xl border border-gray-200 focus-within:ring-2 focus-within:ring-green-100 focus-within:border-green-400 transition-all">
             <button type="button" className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200/50 transition">
                <span className="text-base sm:text-xl">☺</span>
