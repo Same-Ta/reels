@@ -285,8 +285,25 @@ const ReelsView = ({ onClose, onStartChat }) => {
       ref={containerRef}
       className="absolute inset-0 z-50 bg-black flex flex-col overflow-hidden touch-none h-[100dvh]"
     >
+      {/* 영상 재생 안내 메시지 */}
+      <div className="absolute top-0 left-0 right-0 z-40 bg-gradient-to-b from-black/90 via-black/70 to-transparent pt-2 pb-8 pointer-events-none">
+        <div className="text-center px-4 pt-1">
+          <p className="text-white/90 text-xs sm:text-sm font-medium">
+            영상이 재생되지 않을 시 다음 링크로 접속하시기 바랍니다
+          </p>
+          <a 
+            href="https://reels-one-jet.vercel.app/" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-blue-400 hover:text-blue-300 text-xs sm:text-sm underline mt-1 inline-block pointer-events-auto"
+          >
+            https://reels-one-jet.vercel.app/
+          </a>
+        </div>
+      </div>
+
       {/* 헤더 */}
-      <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-6 z-30 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
+      <div className="absolute top-16 left-0 right-0 h-16 flex items-center justify-between px-6 z-30 bg-gradient-to-b from-black/60 to-transparent pointer-events-none">
         <h2 className="text-white font-bold text-lg flex items-center gap-2 pointer-events-auto">
           <Play size={20} className="text-pink-500 fill-pink-500" />
           Job Reels

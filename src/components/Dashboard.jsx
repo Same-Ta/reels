@@ -124,7 +124,7 @@ const Dashboard = ({ onViewReels, onToggleSidebar, onOpenChat, onViewBookmarks, 
               <div>
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
                   <Activity className="text-purple-600" size={28} />
-                  대시보드
+                  취준로그
                 </h1>
                 <p className="text-xs sm:text-sm text-gray-500 mt-1">나의 활동과 채팅을 한눈에 확인하세요</p>
               </div>
@@ -150,48 +150,75 @@ const Dashboard = ({ onViewReels, onToggleSidebar, onOpenChat, onViewBookmarks, 
         {/* Main Content - 통계 + 채팅 */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-8">
           <div className="max-w-7xl mx-auto">
-            {/* 상단 통계 카드 */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-              {/* Total Bookmarks */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
-                    <Bookmark size={24} className="text-white" />
-                  </div>
-                  <span className="text-xs font-medium text-gray-500 bg-blue-50 px-2.5 py-1 rounded-full">전체</span>
+            {/* 상단: 최근 채팅 (좌측) + 나의 활동 (우측) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+              {/* 좌측: 최근 채팅 */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col" style={{ height: '480px' }}>
+                <div className="p-6 border-b">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <MessageCircle size={20} className="text-purple-600" />
+                    최근 채팅
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">진행 중인 대화를 확인하세요</p>
                 </div>
-                <div className="text-3xl font-bold text-gray-900 mb-1">{totalBookmarks}</div>
-                <div className="text-sm text-gray-500">저장한 직업</div>
+
+                {loading ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : chats.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center text-center p-6">
+                    <div>
+                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MessageCircle size={32} className="text-gray-400" />
+                      </div>
+                      <h4 className="text-base font-semibold text-gray-900 mb-2">대화가 없습니다</h4>
+                      <p className="text-sm text-gray-500 mb-4">릴스에서 관심있는 직업을 찾고<br/>대화를 시작해보세요!</p>
+                      <button
+                        onClick={onViewReels}
+                        className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition text-sm font-semibold"
+                      >
+                        릴스 보기
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-y-auto">
+                    {chats.slice(0, 5).map(chat => (
+                      <div
+                        key={chat.id}
+                        onClick={() => handleSelectChat(chat)}
+                        className={`p-4 border-b hover:bg-purple-50 cursor-pointer transition ${
+                          activeChat?.id === chat.id ? 'bg-purple-50 border-l-4 border-l-purple-500' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="relative flex-shrink-0">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md">
+                              {chat.vloggerName?.[0] || 'V'}
+                            </div>
+                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h4 className="font-semibold text-gray-900 text-sm">{chat.vloggerName}</h4>
+                              <span className="text-xs text-gray-400">
+                                {chat.lastTimestamp?.seconds 
+                                  ? new Date(chat.lastTimestamp.seconds * 1000).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+                                  : ''}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mb-1">{chat.vloggerRole}</p>
+                            <p className="text-sm text-gray-600 truncate">{chat.lastMessage || '대화를 시작해보세요'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {/* This Week */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
-                    <TrendingUp size={24} className="text-white" />
-                  </div>
-                  <span className="text-xs font-medium text-gray-500 bg-green-50 px-2.5 py-1 rounded-full">이번주</span>
-                </div>
-                <div className="text-3xl font-bold text-gray-900 mb-1">{thisWeekBookmarks}</div>
-                <div className="text-sm text-gray-500">이번 주 저장</div>
-              </div>
-
-              {/* Chat Count */}
-              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center">
-                    <MessageCircle size={24} className="text-white" />
-                  </div>
-                  <span className="text-xs font-medium text-gray-500 bg-purple-50 px-2.5 py-1 rounded-full">활성</span>
-                </div>
-                <div className="text-3xl font-bold text-gray-900 mb-1">{chats.length}</div>
-                <div className="text-sm text-gray-500">진행 중인 대화</div>
-              </div>
-            </div>
-
-            {/* 활동 그래프 + 채팅 영역 (반반) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* 왼쪽: 나의 활동 */}
+              {/* 우측: 나의 활동 */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                 <div className="flex items-center justify-between mb-6">
                   <div>
@@ -268,71 +295,44 @@ const Dashboard = ({ onViewReels, onToggleSidebar, onOpenChat, onViewBookmarks, 
                   </div>
                 )}
               </div>
+            </div>
 
-              {/* 오른쪽: 최근 채팅 */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col" style={{ height: '480px' }}>
-                <div className="p-6 border-b bg-gradient-to-r from-purple-50 to-blue-50">
-                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <MessageCircle size={20} className="text-purple-600" />
-                    최근 채팅
-                  </h3>
-                  <p className="text-sm text-gray-500 mt-1">진행 중인 대화를 확인하세요</p>
+            {/* 하단 통계 카드 */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              {/* Total Bookmarks */}
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
+                    <Bookmark size={24} className="text-white" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-500 bg-blue-50 px-2.5 py-1 rounded-full">전체</span>
                 </div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">{totalBookmarks}</div>
+                <div className="text-sm text-gray-500">저장한 직업</div>
+              </div>
 
-                {loading ? (
-                  <div className="flex-1 flex items-center justify-center">
-                    <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+              {/* This Week */}
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
+                    <TrendingUp size={24} className="text-white" />
                   </div>
-                ) : chats.length === 0 ? (
-                  <div className="flex-1 flex items-center justify-center text-center p-6">
-                    <div>
-                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <MessageCircle size={32} className="text-gray-400" />
-                      </div>
-                      <h4 className="text-base font-semibold text-gray-900 mb-2">대화가 없습니다</h4>
-                      <p className="text-sm text-gray-500 mb-4">릴스에서 관심있는 직업을 찾고<br/>대화를 시작해보세요!</p>
-                      <button
-                        onClick={onViewReels}
-                        className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition text-sm font-semibold"
-                      >
-                        릴스 보기
-                      </button>
-                    </div>
+                  <span className="text-xs font-medium text-gray-500 bg-green-50 px-2.5 py-1 rounded-full">이번주</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">{thisWeekBookmarks}</div>
+                <div className="text-sm text-gray-500">이번 주 저장</div>
+              </div>
+
+              {/* Chat Count */}
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center">
+                    <MessageCircle size={24} className="text-white" />
                   </div>
-                ) : (
-                  <div className="flex-1 overflow-y-auto">
-                    {chats.slice(0, 5).map(chat => (
-                      <div
-                        key={chat.id}
-                        onClick={() => handleSelectChat(chat)}
-                        className={`p-4 border-b hover:bg-purple-50 cursor-pointer transition ${
-                          activeChat?.id === chat.id ? 'bg-purple-50 border-l-4 border-l-purple-500' : ''
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className="relative flex-shrink-0">
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md">
-                              {chat.vloggerName?.[0] || 'V'}
-                            </div>
-                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between mb-1">
-                              <h4 className="font-semibold text-gray-900 text-sm">{chat.vloggerName}</h4>
-                              <span className="text-xs text-gray-400">
-                                {chat.lastTimestamp?.seconds 
-                                  ? new Date(chat.lastTimestamp.seconds * 1000).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
-                                  : ''}
-                              </span>
-                            </div>
-                            <p className="text-xs text-gray-500 mb-1">{chat.vloggerRole}</p>
-                            <p className="text-sm text-gray-600 truncate">{chat.lastMessage || '대화를 시작해보세요'}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                  <span className="text-xs font-medium text-gray-500 bg-purple-50 px-2.5 py-1 rounded-full">활성</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">{chats.length}</div>
+                <div className="text-sm text-gray-500">진행 중인 대화</div>
               </div>
             </div>
 
