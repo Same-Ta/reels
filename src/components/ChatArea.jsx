@@ -22,21 +22,21 @@ import {
 } from 'firebase/firestore';
 import { generateSuggestedQuestions } from '../config/gemini';
 import { VLOG_DATA } from '../data/vlogData';
+import ChatListPanel from './ChatListPanel';
 
 const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
+  const [localActiveChat, setLocalActiveChat] = useState(activeChat);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [suggestedQuestions, setSuggestedQuestions] = useState([]);
   const [isLoadingQuestions, setIsLoadingQuestions] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Find vlog data to show profile info
-  const vlogInfo = VLOG_DATA.find(v => v.id === activeChat?.vloggerId) || {};
-
   useEffect(() => {
-    if (!activeChat) return;
-    // Use explicit path segments for nested collections: 'artifacts' / appId / 'public' / 'data' / 'chats' / activeChat.id / 'messages'
-    const messagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'chats', activeChat.id, 'messages');
+    const chat = activeChat || localActiveChat;
+    if (!chat) return;
+    // Use explicit path segments for nested collections: 'artifacts' / appId / 'public' / 'data' / 'chats' / chat.id / 'messages'
+    const messagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'chats', chat.id, 'messages');
     const q = query(messagesRef, orderBy('timestamp', 'asc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const newMessages = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -44,32 +44,34 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
       setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
     });
     return () => unsubscribe();
-  }, [activeChat]);
+  }, [activeChat, localActiveChat]);
 
   // 메시지가 변경될 때마다 질문 추천 업데이트
   useEffect(() => {
-    if (!activeChat || messages.length === 0) {
+    const chat = activeChat || localActiveChat;
+    const vlogInfo = VLOG_DATA.find(v => v.id === chat?.vloggerId) || {};
+    
+    if (!chat || messages.length === 0) {
       // 대화가 없을 때 기본 질문 표시
-      if (activeChat && vlogInfo.role) {
-        loadSuggestedQuestions([]);
+      if (chat && vlogInfo.role) {
+        loadSuggestedQuestions([], chat, vlogInfo);
       }
       return;
     }
     
     // 마지막 5개 메시지만 사용하여 질문 추천
     const recentMessages = messages.slice(-5);
-    loadSuggestedQuestions(recentMessages);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages, activeChat]);
+    loadSuggestedQuestions(recentMessages, chat, vlogInfo);
+  }, [messages, activeChat, localActiveChat]);
 
-  const loadSuggestedQuestions = async (chatHistory) => {
-    if (!activeChat) return;
+  const loadSuggestedQuestions = async (chatHistory, chat, vlogInfo) => {
+    if (!chat) return;
     
     setIsLoadingQuestions(true);
     try {
       const vloggerInfo = {
-        username: activeChat.vloggerName,
-        role: activeChat.vloggerRole || vlogInfo.role,
+        username: chat.vloggerName,
+        role: chat.vloggerRole || vlogInfo.role,
       };
       const questions = await generateSuggestedQuestions(chatHistory, vloggerInfo);
       setSuggestedQuestions(questions);
@@ -85,10 +87,13 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
     const text = questionText || newMessage;
     if (!text.trim()) return;
     
+    const chat = activeChat || localActiveChat;
+    if (!chat) return;
+    
     setNewMessage('');
     
     try {
-      const messagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'chats', activeChat.id, 'messages');
+      const messagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'chats', chat.id, 'messages');
       
       // 사용자 메시지 저장
       await addDoc(messagesRef, {
@@ -98,7 +103,7 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
         timestamp: serverTimestamp()
       });
       
-      const chatDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'chats', activeChat.id);
+      const chatDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'chats', chat.id);
       await setDoc(chatDocRef, {
         lastMessage: text,
         lastTimestamp: serverTimestamp(),
@@ -114,17 +119,42 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
     handleSendMessage(null, question);
   };
 
-  if (!activeChat) {
+  // activeChat이 변경되면 localActiveChat 업데이트
+  useEffect(() => {
+    if (activeChat) {
+      setLocalActiveChat(activeChat);
+    }
+  }, [activeChat]);
+
+  const displayChat = activeChat || localActiveChat;
+
+  if (!displayChat) {
     return (
-      <div className="flex-1 bg-[#f0f2f5] flex flex-col items-center justify-center text-gray-400 px-4">
-        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
-          <MessageCircle size={32} className="text-gray-400 sm:w-10 sm:h-10" />
+      <>
+        {/* 모바일: 채팅 리스트 표시 */}
+        <div className="sm:hidden flex-1 flex flex-col h-full">
+          <ChatListPanel 
+            currentUser={currentUser}
+            activeChatId={null}
+            onSelectChat={setLocalActiveChat}
+            isCollapsed={false}
+            onToggleSidebar={onToggleSidebar}
+            showMobileMenu={true}
+          />
         </div>
-        <h3 className="text-base sm:text-lg font-bold text-gray-600 mb-2">대화를 시작해보세요</h3>
-        <p className="text-xs sm:text-sm text-center">왼쪽 목록에서 채팅방을 선택하거나<br/>릴스 메뉴에서 새로운 직무 담당자를 찾아보세요.</p>
-      </div>
+        {/* 데스크톱: 빈 화면 */}
+        <div className="hidden sm:flex flex-1 bg-[#f0f2f5] flex-col items-center justify-center text-gray-400 px-4">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
+            <MessageCircle size={32} className="text-gray-400 sm:w-10 sm:h-10" />
+          </div>
+          <h3 className="text-base sm:text-lg font-bold text-gray-600 mb-2">대화를 시작해보세요</h3>
+          <p className="text-xs sm:text-sm text-center">왼쪽 목록에서 채팅방을 선택하거나<br/>릴스 메뉴에서 새로운 직무 담당자를 찾아보세요.</p>
+        </div>
+      </>
     );
   }
+
+  const vlogInfo = VLOG_DATA.find(v => v.id === displayChat.vloggerId) || {};
 
   return (
     <div className="flex-1 flex h-full overflow-hidden bg-[#f3f4f6]">
@@ -143,13 +173,13 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
             </button>
             <div className="relative">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
-                {activeChat.vloggerName?.[0] || 'V'}
+                {displayChat.vloggerName?.[0] || 'V'}
               </div>
               <div className="absolute bottom-0 right-0 w-2 h-2 sm:w-2.5 sm:h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
             </div>
             <div>
-              <h2 className="font-bold text-gray-800 text-sm sm:text-lg">{activeChat.vloggerName}</h2>
-              <p className="text-[10px] sm:text-xs text-gray-500">{activeChat.vloggerRole || vlogInfo.role}</p>
+              <h2 className="font-bold text-gray-800 text-sm sm:text-lg">{displayChat.vloggerName}</h2>
+              <p className="text-[10px] sm:text-xs text-gray-500">{displayChat.vloggerRole || vlogInfo.role}</p>
             </div>
           </div>
           <div className="hidden sm:flex gap-4 text-gray-400">
@@ -170,7 +200,7 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
               <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} group`}>
                  {!isMe && (
                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-gray-300 flex-shrink-0 mr-2 sm:mr-3 self-end flex items-center justify-center text-[10px] sm:text-xs font-bold text-gray-600">
-                      {activeChat.vloggerName?.[0]}
+                      {displayChat.vloggerName?.[0]}
                    </div>
                  )}
                  <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%] sm:max-w-[70%]`}>
@@ -243,11 +273,11 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
         <div className="p-8 flex flex-col items-center border-b border-gray-100">
           <div className="w-24 h-24 rounded-full bg-gray-200 mb-4 p-1 border-2 border-green-500 relative">
              <div className="w-full h-full rounded-full bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white text-3xl font-bold">
-               {activeChat.vloggerName?.[0]}
+               {displayChat.vloggerName?.[0]}
              </div>
           </div>
-          <h3 className="text-xl font-bold text-gray-800">{activeChat.vloggerName}</h3>
-          <p className="text-sm text-gray-500 mb-2">{activeChat.vloggerRole || vlogInfo.role}</p>
+          <h3 className="text-xl font-bold text-gray-800">{displayChat.vloggerName}</h3>
+          <p className="text-sm text-gray-500 mb-2">{displayChat.vloggerRole || vlogInfo.role}</p>
           <p className="text-sm text-gray-600 text-center px-4">{vlogInfo.description || '현직자와의 대화를 통해 직무에 대해 알아보세요'}</p>
         </div>
 

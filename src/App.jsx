@@ -298,8 +298,8 @@ export default function App() {
               </div>
             )}
 
-            {/* Chat List - 항상 표시 (모바일에서는 activeChat 있을 때 숨김) */}
-            <div className={`${activeChat ? 'hidden sm:flex' : 'flex'} flex-col border-r border-gray-700 h-full ${isChatListCollapsed ? 'w-16' : 'w-80'}`}>
+            {/* Chat List - 데스크톱에서만 표시 */}
+            <div className={`hidden sm:flex flex-col border-r border-gray-700 h-full ${isChatListCollapsed ? 'w-16' : 'w-80'}`}>
               <ChatListPanel 
                 currentUser={user} 
                 activeChatId={activeChat?.id} 
@@ -307,12 +307,12 @@ export default function App() {
                 isCollapsed={isChatListCollapsed}
                 onToggleCollapse={() => setIsChatListCollapsed(!isChatListCollapsed)}
                 onToggleSidebar={() => setShowMobileSidebar(true)}
-                showMobileMenu={!activeChat}
+                showMobileMenu={false}
               />
             </div>
             
-            {/* Chat Window - 항상 표시 (모바일에서는 activeChat 있을 때만) */}
-            <div className={`flex-1 ${activeChat ? 'flex' : 'hidden sm:flex'} flex-col h-full overflow-hidden`}>
+            {/* Chat Window - 데스크톱에서는 항상, 모바일에서는 전체 화면 */}
+            <div className="flex-1 flex h-full overflow-hidden">
               <ChatArea 
                 activeChat={activeChat} 
                 currentUser={user}
