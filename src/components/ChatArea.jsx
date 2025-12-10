@@ -130,9 +130,9 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
 
   if (!displayChat) {
     return (
-      <>
+      <div className="flex-1 flex h-full bg-[#f3f4f6] overflow-hidden">
         {/* 모바일: 채팅 리스트 표시 */}
-        <div className="sm:hidden flex-1 flex flex-col h-full">
+        <div className="sm:hidden flex-1 flex flex-col h-full overflow-hidden">
           <ChatListPanel 
             currentUser={currentUser}
             activeChatId={null}
@@ -150,16 +150,16 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
           <h3 className="text-base sm:text-lg font-bold text-gray-600 mb-2">대화를 시작해보세요</h3>
           <p className="text-xs sm:text-sm text-center">왼쪽 목록에서 채팅방을 선택하거나<br/>릴스 메뉴에서 새로운 직무 담당자를 찾아보세요.</p>
         </div>
-      </>
+      </div>
     );
   }
 
   const vlogInfo = VLOG_DATA.find(v => v.id === displayChat.vloggerId) || {};
 
   return (
-    <div className="flex-1 flex h-full bg-[#f3f4f6] overflow-hidden">
+    <div className="flex-1 flex h-full bg-[#f3f4f6] overflow-hidden relative">
       {/* Chat Messages Area */}
-      <div className="flex-1 flex flex-col h-full overflow-hidden">
+      <div className="flex-1 flex flex-col h-full">
         {/* Header - 절대 고정 */}
         <div className="h-14 sm:h-20 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-8 shadow-sm z-50 flex-shrink-0">
           <div className="flex items-center gap-2 sm:gap-4">
@@ -188,7 +188,7 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
         </div>
 
         {/* Messages Body - 스크롤 가능 영역 */}
-        <div className="flex-1 overflow-y-auto p-3 sm:p-8 space-y-4 sm:space-y-6">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-8 space-y-4 sm:space-y-6 min-h-0">
           {/* Date Separator (Mock) */}
           <div className="flex justify-center">
             <span className="text-[10px] text-gray-400 bg-gray-200/50 px-3 py-1 rounded-full">Today</span>
