@@ -14,7 +14,7 @@ import {
   Loader2
 } from 'lucide-react';
 import vlogDataDefault from '../data/vlogData';
-import { db, auth } from '../config/firebase';
+import { db, auth, appId } from '../config/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // [중요] 사용자가 소리를 켰는지 기억하는 변수 (기본값: 무음)
@@ -254,7 +254,29 @@ const ReelsView = ({ onClose, onStartChat }) => {
   // DB 저장 함수들 (기존 유지)
   const saveOneOnOneClick = async () => { if (!selectedMentor) return; try { await addDoc(collection(db, 'oneOnOneClicks'), { mentorId: selectedMentor.id, mentorName: selectedMentor.username, mentorRole: selectedMentor.role, userId: auth.currentUser?.uid || 'anonymous', amount: 20000, status: 'clicked', createdAt: serverTimestamp() }); } catch (error) { console.error('Error', error); } };
   const saveTemplateQuestion = async () => { if (!selectedMentor) return; try { await addDoc(collection(db, 'templateQuestions'), { mentorId: selectedMentor.id, mentorName: selectedMentor.username, mentorRole: selectedMentor.role, userId: auth.currentUser?.uid || 'anonymous', questionSummary: questionSummary, questionDetail: questionDetail, email: email, status: 'pending', createdAt: serverTimestamp() }); } catch (error) { console.error('Error', error); } };
-  const toggleInterest = async (id) => { const newState = !interested[id]; if (!auth.currentUser) { alert('로그인이 필요합니다.'); return; } setInterested(prev => ({ ...prev, [id]: newState })); if (newState) { try { await addDoc(collection(db, 'bookmarks'), { userId: auth.currentUser.uid, vlogId: id, vlogData: currentVlog, createdAt: serverTimestamp() }); } catch { setInterested(prev => ({ ...prev, [id]: false })); } } };
+  const toggleInterest = async (id) => { 
+    const newState = !interested[id]; 
+    if (!auth.currentUser) { 
+      alert('로그인이 필요합니다.'); 
+      return; 
+    } 
+    setInterested(prev => ({ ...prev, [id]: newState })); 
+    if (newState) { 
+      try { 
+        console.log('Saving bookmark:', { vlogId: currentVlog.videoId, vlogData: currentVlog });
+        await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'bookmarks'), { 
+          userId: auth.currentUser.uid, 
+          vlogId: currentVlog.videoId,
+          vlogData: currentVlog, 
+          timestamp: serverTimestamp() 
+        }); 
+        console.log('Bookmark saved successfully');
+      } catch (error) { 
+        console.error('Error saving bookmark:', error); 
+        setInterested(prev => ({ ...prev, [id]: false })); 
+      } 
+    } 
+  };
 
   const currentVlog = shuffledVlogs[currentIndex];
 

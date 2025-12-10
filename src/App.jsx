@@ -207,8 +207,16 @@ export default function App() {
             onStartChat={handleStartChat}
             onViewReels={() => setView('reels')}
             onToggleSidebar={() => setShowMobileSidebar(true)}
+            onOpenChat={(chat) => {
+              setActiveChat(chat);
+              setView('chat');
+            }}
+            onViewBookmarks={() => setView('bookmarks')}
+            activeChat={activeChat}
             currentUser={user}
           />
+        ) : view === 'bookmarks' ? (
+          <BookmarksView onClose={() => setView('dashboard')} />
         ) : view === 'admin' && isAdmin ? (
           /* 관리자 뷰 */
           <AdminChatPanel onBack={() => setView('dashboard')} />

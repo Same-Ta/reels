@@ -2,12 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db, auth, appId } from '../config/firebase';
 import { TrendingUp, Bookmark, MessageCircle, Menu, Play, BarChart3, Activity } from 'lucide-react';
+import vlogDataDefault from '../data/vlogData';
 
-const Dashboard = ({ onViewReels, onToggleSidebar }) => {
+const Dashboard = ({ onViewReels, onToggleSidebar, onOpenChat, onViewBookmarks, activeChat }) => {
   const [dailyActivity, setDailyActivity] = useState([]);
   const [totalBookmarks, setTotalBookmarks] = useState(0);
   const [thisWeekBookmarks, setThisWeekBookmarks] = useState(0);
-  const [activeChat, setActiveChat] = useState(null);
+  const [bookmarks, setBookmarks] = useState([]);
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -54,14 +55,26 @@ const Dashboard = ({ onViewReels, onToggleSidebar }) => {
     const bookmarksQuery = query(bookmarksRef, where('userId', '==', auth.currentUser.uid));
     
     const unsubscribeBookmarks = onSnapshot(bookmarksQuery, (snapshot) => {
-      const bookmarkedIds = snapshot.docs.map(doc => doc.data().vlogId);
-      const bookmarksWithTimestamps = snapshot.docs.map(doc => ({
-        vlogId: doc.data().vlogId,
-        timestamp: doc.data().timestamp
-      }));
+      console.log('Bookmarks snapshot:', snapshot.docs.length, 'documents');
+      const bookmarkList = snapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log('Bookmark data:', data);
+        
+        // vlogData가 있으면 그걸 사용, 없으면 vlogId로 찾기
+        const vlogInfo = data.vlogData || vlogDataDefault.find(v => v.videoId === data.vlogId);
+        
+        return {
+          id: doc.id,
+          vlogId: data.vlogId,
+          timestamp: data.timestamp,
+          vlogInfo: vlogInfo
+        };
+      });
       
-      setTotalBookmarks(bookmarkedIds.length);
-      calculateDailyActivity(bookmarksWithTimestamps);
+      console.log('Processed bookmarkList:', bookmarkList);
+      setBookmarks(bookmarkList);
+      setTotalBookmarks(bookmarkList.length);
+      calculateDailyActivity(bookmarkList);
       setLoading(false);
     }, (error) => {
       console.error('Error loading bookmarks:', error);
@@ -86,7 +99,9 @@ const Dashboard = ({ onViewReels, onToggleSidebar }) => {
   }, []);
 
   const handleSelectChat = (chat) => {
-    setActiveChat(chat);
+    if (onOpenChat) {
+      onOpenChat(chat);
+    }
   };
 
   // 최대값 계산 (그래프 정규화용)
@@ -117,7 +132,7 @@ const Dashboard = ({ onViewReels, onToggleSidebar }) => {
             <div className="flex items-center gap-3">
               <button 
                 onClick={onViewReels}
-                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-300 to-purple-400 text-white rounded-lg hover:shadow-lg transition hover:from-purple-400 hover:to-purple-500"
               >
                 <Play size={16} />
                 <span className="text-sm font-semibold">릴스 보기</span>
@@ -319,6 +334,112 @@ const Dashboard = ({ onViewReels, onToggleSidebar }) => {
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* 저장된 릴스 목록 */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+              <div className="p-6 border-b bg-gradient-to-r from-blue-50 to-purple-50 flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <Bookmark size={20} className="text-blue-600" />
+                    저장된 릴스
+                    {bookmarks.length > 0 && (
+                      <span className="text-sm font-normal text-gray-500">({bookmarks.length})</span>
+                    )}
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">관심있는 직업을 다시 확인해보세요</p>
+                </div>
+                {bookmarks.length > 8 && (
+                  <button
+                    onClick={onViewBookmarks}
+                    className="px-4 py-2 bg-gradient-to-r from-purple-300 to-purple-400 text-white rounded-lg hover:shadow-lg transition text-sm font-semibold hover:from-purple-400 hover:to-purple-500"
+                  >
+                    전체보기
+                  </button>
+                )}
+              </div>
+
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : bookmarks.length === 0 ? (
+                <div className="flex items-center justify-center text-center p-12">
+                  <div>
+                    <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Bookmark size={32} className="text-gray-400" />
+                    </div>
+                    <h4 className="text-base font-semibold text-gray-900 mb-2">저장된 릴스가 없습니다</h4>
+                    <p className="text-sm text-gray-500 mb-4">릴스를 보고 관심있는 직업을<br/>저장해보세요!</p>
+                    <button
+                      onClick={onViewReels}
+                      className="px-4 py-2 bg-gradient-to-r from-purple-300 to-purple-400 text-white rounded-lg hover:shadow-lg transition text-sm font-semibold hover:from-purple-400 hover:to-purple-500"
+                    >
+                      릴스 보기
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 p-6">
+                  {bookmarks.slice(0, 8).map((bookmark, index) => {
+                    const vlog = bookmark.vlogInfo;
+                    if (!vlog) return null;
+                    
+                    return (
+                      <div
+                        key={bookmark.vlogId || index}
+                        className="bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-all cursor-pointer group"
+                        onClick={onViewReels}
+                      >
+                        {/* 썸네일 */}
+                        <div className="relative aspect-video bg-gray-200 overflow-hidden">
+                          <img
+                            src={`https://img.youtube.com/vi/${vlog.videoId}/maxresdefault.jpg`}
+                            alt={vlog.username}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            onError={(e) => {
+                              e.target.src = `https://img.youtube.com/vi/${vlog.videoId}/hqdefault.jpg`;
+                            }}
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                            <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Play size={24} className="text-purple-600 ml-1" />
+                            </div>
+                          </div>
+                          {/* 저장된 뱃지 */}
+                          <div className="absolute top-2 right-2 bg-yellow-400 text-gray-900 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                            <Bookmark size={12} className="fill-current" />
+                            저장됨
+                          </div>
+                        </div>
+                        
+                        {/* 정보 */}
+                        <div className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs">
+                              {vlog.username[0]}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className="font-semibold text-gray-900 text-sm truncate">{vlog.username}</h4>
+                              <p className="text-xs text-gray-500 truncate">{vlog.role}</p>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-600 line-clamp-2 mb-2">
+                            {vlog.description}
+                          </p>
+                          <div className="flex gap-1 flex-wrap">
+                            {vlog.tags.slice(0, 2).map(tag => (
+                              <span key={tag} className="text-[10px] bg-gray-100 px-2 py-0.5 rounded-full text-gray-600">
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         </div>
