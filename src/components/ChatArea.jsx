@@ -157,9 +157,9 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
   const vlogInfo = VLOG_DATA.find(v => v.id === displayChat.vloggerId) || {};
 
   return (
-    <div className="flex-1 flex h-full bg-[#f3f4f6]">
+    <div className="flex-1 flex h-full bg-[#f3f4f6] overflow-hidden">
       {/* Chat Messages Area */}
-      <div className="flex-1 flex flex-col h-full">
+      <div className="flex-1 flex flex-col h-full overflow-hidden">
         {/* Header - 절대 고정 */}
         <div className="h-14 sm:h-20 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-8 shadow-sm z-50 flex-shrink-0">
           <div className="flex items-center gap-2 sm:gap-4">
@@ -222,30 +222,32 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
           <div ref={messagesEndRef} />
         </div>
 
-        {/* 추천 질문 영역 */}
-        {suggestedQuestions.length > 0 && (
-          <div className="px-3 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-50 to-blue-50 border-t border-gray-100">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles size={12} className="text-purple-500 sm:w-3.5 sm:h-3.5" />
-              <span className="text-[10px] sm:text-xs font-medium text-purple-600">추천 질문</span>
-              {isLoadingQuestions && <span className="text-[10px] sm:text-xs text-gray-400">(업데이트 중...)</span>}
+        {/* 하단 고정 영역 (추천 질문 + 입력창) */}
+        <div className="flex-shrink-0">
+          {/* 추천 질문 영역 */}
+          {suggestedQuestions.length > 0 && (
+            <div className="px-3 py-2 sm:px-6 sm:py-3 bg-gradient-to-r from-purple-50 to-blue-50 border-t border-gray-100">
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles size={12} className="text-purple-500 sm:w-3.5 sm:h-3.5" />
+                <span className="text-[10px] sm:text-xs font-medium text-purple-600">추천 질문</span>
+                {isLoadingQuestions && <span className="text-[10px] sm:text-xs text-gray-400">(업데이트 중...)</span>}
+              </div>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                {suggestedQuestions.map((question, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleQuestionClick(question)}
+                    className="px-2 py-1.5 sm:px-3 sm:py-2 bg-white text-[11px] sm:text-sm text-gray-700 rounded-xl border border-purple-200 hover:border-purple-400 hover:bg-purple-50 transition-all shadow-sm hover:shadow"
+                  >
+                    {question}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-1.5 sm:gap-2">
-              {suggestedQuestions.map((question, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleQuestionClick(question)}
-                  className="px-2 py-1.5 sm:px-3 sm:py-2 bg-white text-[11px] sm:text-sm text-gray-700 rounded-xl border border-purple-200 hover:border-purple-400 hover:bg-purple-50 transition-all shadow-sm hover:shadow"
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Input Area - 절대 고정 */}
-        <div className="p-3 sm:p-6 bg-white border-t border-gray-100 z-40 flex-shrink-0">
+          {/* Input Area - 절대 고정 */}
+          <div className="p-3 sm:p-6 bg-white border-t border-gray-100 z-40">
           <form onSubmit={handleSendMessage} className="flex gap-2 sm:gap-3 bg-gray-50 p-1.5 sm:p-2 rounded-2xl border border-gray-200 focus-within:ring-2 focus-within:ring-green-100 focus-within:border-green-400 transition-all">
             <button type="button" className="p-1.5 sm:p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-200/50 transition">
                <span className="text-base sm:text-xl">☺</span>
@@ -265,6 +267,7 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
               <Send size={16} className="sm:w-[18px] sm:h-[18px]" />
             </button>
           </form>
+          </div>
         </div>
       </div>
 
