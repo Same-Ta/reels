@@ -1,94 +1,103 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db, auth, appId } from '../config/firebase';
-import { Search, MapPin, Calendar, Briefcase, Bookmark, MessageCircle, ChevronDown, Filter, Play, ArrowRight, Sparkles, Menu, X } from 'lucide-react';
-import vlogDataDefault from '../data/vlogData';
+import { TrendingUp, Bookmark, MessageCircle, Menu, Play, BarChart3, Activity } from 'lucide-react';
 
-const Dashboard = ({ onStartChat, onViewReels, onToggleSidebar }) => {
-  const [bookmarkedJobs, setBookmarkedJobs] = useState([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTags, setSelectedTags] = useState([]);
-  const [sortBy, setSortBy] = useState('date');
+const Dashboard = ({ onViewReels, onToggleSidebar }) => {
+  const [dailyActivity, setDailyActivity] = useState([]);
+  const [totalBookmarks, setTotalBookmarks] = useState(0);
+  const [thisWeekBookmarks, setThisWeekBookmarks] = useState(0);
+  const [activeChat, setActiveChat] = useState(null);
+  const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 모든 직업 데이터 (vlogData 기반)
-  const allJobs = vlogDataDefault.map((vlog, index) => ({
-    id: vlog.id,
-    title: vlog.role,
-    company: vlog.username,
-    salary: `${7.5 + index * 0.5} - ${12.5 + index * 0.5}k PLN`,
-    location: 'Remote',
-    type: vlog.tags[0] || 'Full time',
-    tags: vlog.tags,
-    postedDate: `${index + 2} days ago`,
-    description: vlog.description,
-    videoId: vlog.videoId,
-    avatar: vlog.username[0],
-    isBookmarked: false
-  }));
-
   useEffect(() => {
-    loadBookmarks();
-  }, []);
+    const calculateDailyActivity = (bookmarksWithTimestamps) => {
+      // 최근 7일 데이터 준비
+      const days = ['일', '월', '화', '수', '목', '금', '토'];
+      const today = new Date();
+      const last7Days = [];
+      
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        last7Days.push({
+          date: date.toISOString().split('T')[0],
+          day: days[date.getDay()],
+          count: 0
+        });
+      }
+      
+      // 북마크 카운트
+      bookmarksWithTimestamps.forEach(bookmark => {
+        if (bookmark.timestamp && bookmark.timestamp.seconds) {
+          const bookmarkDate = new Date(bookmark.timestamp.seconds * 1000);
+          const dateStr = bookmarkDate.toISOString().split('T')[0];
+          
+          const dayData = last7Days.find(d => d.date === dateStr);
+          if (dayData) {
+            dayData.count += 1;
+          }
+        }
+      });
+      
+      // 이번주 북마크 계산
+      const weekCount = last7Days.reduce((sum, day) => sum + day.count, 0);
+      setThisWeekBookmarks(weekCount);
+      
+      setDailyActivity(last7Days);
+    };
 
-  const loadBookmarks = async () => {
-    try {
-      if (!auth.currentUser) return;
-      
-      const bookmarksRef = collection(db, 'artifacts', appId, 'public', 'data', 'bookmarks');
-      const q = query(bookmarksRef, where('userId', '==', auth.currentUser.uid));
-      const snapshot = await getDocs(q);
-      
+    if (!auth.currentUser) return;
+
+    const bookmarksRef = collection(db, 'artifacts', appId, 'public', 'data', 'bookmarks');
+    const bookmarksQuery = query(bookmarksRef, where('userId', '==', auth.currentUser.uid));
+    
+    const unsubscribeBookmarks = onSnapshot(bookmarksQuery, (snapshot) => {
       const bookmarkedIds = snapshot.docs.map(doc => doc.data().vlogId);
-      setBookmarkedJobs(bookmarkedIds);
+      const bookmarksWithTimestamps = snapshot.docs.map(doc => ({
+        vlogId: doc.data().vlogId,
+        timestamp: doc.data().timestamp
+      }));
       
+      setTotalBookmarks(bookmarkedIds.length);
+      calculateDailyActivity(bookmarksWithTimestamps);
       setLoading(false);
-    } catch (error) {
+    }, (error) => {
       console.error('Error loading bookmarks:', error);
       setLoading(false);
-    }
+    });
+
+    const chatsRef = collection(db, 'artifacts', appId, 'public', 'data', 'chats');
+    const chatsQuery = query(chatsRef, where('guestId', '==', auth.currentUser.uid));
+    
+    const unsubscribeChats = onSnapshot(chatsQuery, (snapshot) => {
+      let chatList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      chatList.sort((a, b) => (b.lastTimestamp?.seconds || 0) - (a.lastTimestamp?.seconds || 0));
+      setChats(chatList);
+    }, (error) => {
+      console.error('Error loading chats:', error);
+    });
+
+    return () => {
+      unsubscribeBookmarks();
+      unsubscribeChats();
+    };
+  }, []);
+
+  const handleSelectChat = (chat) => {
+    setActiveChat(chat);
   };
 
-  const toggleBookmark = async (jobId) => {
-    // 북마크 토글 로직은 기존과 동일
-    if (bookmarkedJobs.includes(jobId)) {
-      setBookmarkedJobs(bookmarkedJobs.filter(id => id !== jobId));
-    } else {
-      setBookmarkedJobs([...bookmarkedJobs, jobId]);
-    }
-  };
-
-  // 필터링된 직업 목록 - 저장된 것만 표시
-  const filteredJobs = allJobs
-    .filter(job => {
-      // 저장된 항목만 필터링
-      if (!bookmarkedJobs.includes(job.id)) return false;
-      
-      const matchSearch = job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         job.company.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchTags = selectedTags.length === 0 || selectedTags.some(tag => job.tags.includes(tag));
-      return matchSearch && matchTags;
-    })
-    .map(job => ({
-      ...job,
-      isBookmarked: true // 모두 저장된 항목이므로 true
-    }));
-
-  const allTags = ['Design', 'Remote', 'Full time', 'JavaScript', 'Adobe'];
-
-  const handleJobClick = (job) => {
-    const vlog = vlogDataDefault.find(v => v.id === job.id);
-    if (vlog) {
-      onStartChat(vlog);
-    }
-  };
+  // 최대값 계산 (그래프 정규화용)
+  const maxActivity = Math.max(...dailyActivity.map(d => d.count), 1);
 
   return (
-    <div className="flex-1 bg-gray-50 h-screen overflow-hidden">
+    <div className="flex-1 bg-gradient-to-br from-gray-50 to-gray-100 h-screen overflow-hidden">
       <div className="h-full flex flex-col">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
+        <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-4 sm:py-6 shadow-sm">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               {/* 모바일 햄버거 메뉴 */}
               <button 
@@ -98,226 +107,219 @@ const Dashboard = ({ onStartChat, onViewReels, onToggleSidebar }) => {
                 <Menu size={24} className="text-gray-700" />
               </button>
               <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-gray-900">저장된 직업</h1>
-                <p className="text-xs sm:text-sm text-gray-500 mt-1 hidden sm:block">북마크한 직업 목록을 확인하세요</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
+                  <Activity className="text-purple-600" size={28} />
+                  대시보드
+                </h1>
+                <p className="text-xs sm:text-sm text-gray-500 mt-1">나의 활동과 채팅을 한눈에 확인하세요</p>
               </div>
             </div>
-            <button className="text-gray-600 hover:text-gray-900">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <span className="text-sm font-semibold text-purple-600">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={onViewReels}
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition"
+              >
+                <Play size={16} />
+                <span className="text-sm font-semibold">릴스 보기</span>
+              </button>
+              <div className="w-9 h-9 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center shadow-md">
+                <span className="text-sm font-bold text-white">
                   {auth.currentUser?.email?.[0]?.toUpperCase() || 'U'}
                 </span>
               </div>
-            </button>
-          </div>
-
-          {/* Search and Filters */}
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="직업 또는 회사 검색..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm"
-              />
-            </div>
-            <div className="flex gap-2">
-              <button className="flex-1 sm:flex-none px-3 sm:px-4 py-2.5 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 text-sm">
-                <MapPin size={16} className="sm:w-[18px] sm:h-[18px]" />
-                <span className="hidden sm:inline">Anywhere</span>
-                <ChevronDown size={14} className="sm:w-4 sm:h-4" />
-              </button>
-              <button className="flex-1 sm:flex-none px-3 sm:px-4 py-2.5 border border-gray-300 rounded-lg flex items-center justify-center gap-2 hover:bg-gray-50 text-sm">
-                <Filter size={16} className="sm:w-[18px] sm:h-[18px]" />
-                <span className="hidden sm:inline">Filters</span>
-              </button>
             </div>
           </div>
 
-          {/* Tag Filters */}
-          <div className="flex gap-2 flex-wrap overflow-x-auto pb-2 scrollbar-hide">
-            {allTags.map(tag => (
-              <button
-                key={tag}
-                onClick={() => {
-                  if (selectedTags.includes(tag)) {
-                    setSelectedTags(selectedTags.filter(t => t !== tag));
-                  } else {
-                    setSelectedTags([...selectedTags, tag]);
-                  }
-                }}
-                className={`px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-medium transition whitespace-nowrap ${
-                  selectedTags.includes(tag)
-                    ? 'bg-purple-100 text-purple-700 border-2 border-purple-300'
-                    : 'bg-gray-100 text-gray-700 border-2 border-transparent hover:bg-gray-200'
-                }`}
-              >
-                {selectedTags.includes(tag) && '✕ '}{tag}
-              </button>
-            ))}
-            {selectedTags.length > 0 && (
-              <button
-                onClick={() => setSelectedTags([])}
-                className="px-2.5 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm text-purple-600 hover:text-purple-700 font-medium whitespace-nowrap"
-              >
-                Clear All
-              </button>
-            )}
-          </div>
         </div>
 
-        {/* Job List */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
-          {/* 릴스 탐색 유도 배너 (저장된 직업이 있을 때) */}
-          {!loading && filteredJobs.length > 0 && (
-            <div className="bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-3 sm:p-4 mb-4 text-white shadow-lg">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                <div className="flex items-center gap-3 flex-1">
-                  <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Play size={20} className="fill-white" />
+        {/* Main Content - 통계 + 채팅 */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
+          <div className="max-w-7xl mx-auto">
+            {/* 상단 통계 카드 */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+              {/* Total Bookmarks */}
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center">
+                    <Bookmark size={24} className="text-white" />
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm">더 많은 직업을 탐색해보세요!</h3>
-                    <p className="text-xs text-white/80 line-clamp-1 sm:line-clamp-none">릴스에서 짧은 영상으로 다양한 직업을 만나보세요</p>
-                  </div>
+                  <span className="text-xs font-medium text-gray-500 bg-blue-50 px-2.5 py-1 rounded-full">전체</span>
                 </div>
-                <button
-                  onClick={onViewReels}
-                  className="bg-white text-purple-600 px-4 py-2 rounded-lg font-semibold text-sm hover:bg-gray-50 transition-all flex items-center gap-2 whitespace-nowrap w-full sm:w-auto justify-center"
-                >
-                  릴스 보기
-                  <ArrowRight size={16} />
-                </button>
+                <div className="text-3xl font-bold text-gray-900 mb-1">{totalBookmarks}</div>
+                <div className="text-sm text-gray-500">저장한 직업</div>
+              </div>
+
+              {/* This Week */}
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-xl flex items-center justify-center">
+                    <TrendingUp size={24} className="text-white" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-500 bg-green-50 px-2.5 py-1 rounded-full">이번주</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">{thisWeekBookmarks}</div>
+                <div className="text-sm text-gray-500">이번 주 저장</div>
+              </div>
+
+              {/* Chat Count */}
+              <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl flex items-center justify-center">
+                    <MessageCircle size={24} className="text-white" />
+                  </div>
+                  <span className="text-xs font-medium text-gray-500 bg-purple-50 px-2.5 py-1 rounded-full">활성</span>
+                </div>
+                <div className="text-3xl font-bold text-gray-900 mb-1">{chats.length}</div>
+                <div className="text-sm text-gray-500">진행 중인 대화</div>
               </div>
             </div>
-          )}
 
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-gray-600">
-              저장된 직업 <span className="font-semibold text-gray-900">{filteredJobs.length}</span>개
-            </p>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">정렬:</span>
-              <button className="text-sm font-medium text-gray-900 hover:text-purple-600">
-                날짜순 <ChevronDown size={14} className="inline" />
-              </button>
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            {loading ? (
-              <div className="text-center py-12">
-                <div className="inline-block w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : filteredJobs.length === 0 ? (
-              <div className="max-w-2xl mx-auto px-2 sm:px-0">
-                {/* 릴스 안내 배너 */}
-                <div className="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl p-6 sm:p-8 text-white mb-6 shadow-xl relative overflow-hidden">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-32 translate-x-32"></div>
-                  <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full translate-y-24 -translate-x-24"></div>
-                  
-                  <div className="relative z-10">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Sparkles size={20} className="sm:w-6 sm:h-6 animate-pulse" />
-                      <span className="text-xs sm:text-sm font-semibold bg-white/20 px-2 sm:px-3 py-1 rounded-full">새로운 기능</span>
-                    </div>
-                    <h2 className="text-2xl sm:text-3xl font-bold mb-2 sm:mb-3">릴스로 직업 탐색하기</h2>
-                    <p className="text-white/90 text-sm sm:text-lg mb-4 sm:mb-6 leading-relaxed">
-                      짧은 영상으로 다양한 직업인들의 실제 이야기를 들어보세요.
-                      <span className="hidden sm:inline"><br/></span>
-                      <span className="inline sm:hidden"> </span>
-                      스와이프하며 흥미로운 직업을 발견하고 북마크하세요! 🎯
-                    </p>
-                    
-                    <button
-                      onClick={onViewReels}
-                      className="bg-white text-purple-600 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold text-base sm:text-lg hover:bg-gray-50 transition-all shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2 sm:gap-3 group w-full sm:w-auto justify-center"
-                    >
-                      <Play size={20} className="sm:w-6 sm:h-6 fill-purple-600" />
-                      <span>릴스 보러가기</span>
-                      <ArrowRight size={16} className="sm:w-5 sm:h-5 group-hover:translate-x-1 transition-transform" />
-                    </button>
+            {/* 활동 그래프 + 채팅 영역 (반반) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 왼쪽: 나의 활동 */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                      <BarChart3 size={20} className="text-purple-600" />
+                      나의 활동
+                    </h3>
+                    <p className="text-sm text-gray-500 mt-1">최근 7일간 저장한 릴스</p>
+                  </div>
+                  <div className="flex gap-2">
+                    <button className="px-3 py-1.5 bg-purple-100 text-purple-700 rounded-lg text-xs font-semibold">주간</button>
+                    <button className="px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-200">월간</button>
                   </div>
                 </div>
 
-                {/* 빈 상태 메시지 */}
-                <div className="text-center py-8 bg-white rounded-xl border-2 border-dashed border-gray-300">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Bookmark size={32} className="text-gray-400" />
+                {/* Activity Chart */}
+                {loading ? (
+                  <div className="flex items-center justify-center h-64">
+                    <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">저장된 직업이 없습니다</h3>
-                  <p className="text-gray-500 text-sm">
-                    릴스에서 마음에 드는 직업을 찾아 북마크 버튼을 눌러보세요!
-                  </p>
-                </div>
-              </div>
-            ) : (
-              filteredJobs.map((job) => (
-                <div
-                  key={job.id}
-                  className={`bg-white border-2 rounded-xl p-4 hover:border-purple-300 transition cursor-pointer group ${
-                    job.isBookmarked ? 'border-purple-200 bg-purple-50/30' : 'border-gray-200'
-                  }`}
-                  onClick={() => handleJobClick(job)}
-                >
-                  <div className="flex items-start gap-4">
-                    {/* Company Logo */}
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center flex-shrink-0">
-                      <span className="text-white font-bold text-lg">{job.avatar}</span>
+                ) : (
+                  <div className="space-y-4">
+                    {/* Bar Chart */}
+                    <div className="flex items-end justify-between gap-3 h-48 bg-gradient-to-t from-purple-50/30 to-transparent rounded-xl p-4">
+                      {dailyActivity.map((day, index) => {
+                        const heightPercent = maxActivity > 0 ? (day.count / maxActivity) * 100 : 0;
+                        return (
+                          <div key={index} className="flex-1 flex flex-col items-center gap-2">
+                            <div className="w-full flex flex-col items-center justify-end h-full">
+                              <div className="relative group">
+                                {day.count > 0 && (
+                                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition whitespace-nowrap">
+                                    {day.count}개
+                                  </div>
+                                )}
+                                <div 
+                                  className={`w-full rounded-t-lg transition-all duration-500 ${
+                                    day.count > 0 
+                                      ? 'bg-gradient-to-t from-purple-500 to-purple-400 hover:from-purple-600 hover:to-purple-500' 
+                                      : 'bg-gray-200'
+                                  }`}
+                                  style={{ 
+                                    height: `${Math.max(heightPercent, day.count > 0 ? 10 : 5)}%`,
+                                    minHeight: day.count > 0 ? '20px' : '8px'
+                                  }}
+                                />
+                              </div>
+                            </div>
+                            <span className="text-xs font-medium text-gray-600 mt-2">{day.day}</span>
+                          </div>
+                        );
+                      })}
                     </div>
 
-                    {/* Job Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-4 mb-2">
-                        <div>
-                          <h3 className="font-semibold text-gray-900 group-hover:text-purple-600 transition">
-                            {job.title}
-                          </h3>
-                          <p className="text-sm text-gray-600">
-                            {job.company} <span className="text-gray-400">—</span> {job.location}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleBookmark(job.id);
-                            }}
-                            className="p-2 hover:bg-purple-50 rounded-lg transition"
-                          >
-                            <Bookmark
-                              size={20}
-                              className={job.isBookmarked ? 'fill-purple-500 text-purple-500' : 'text-gray-400'}
-                            />
-                          </button>
-                        </div>
+                    {/* Stats Summary */}
+                    <div className="grid grid-cols-3 gap-3 pt-4 border-t">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-purple-600">{thisWeekBookmarks}</div>
+                        <div className="text-xs text-gray-500 mt-1">이번 주</div>
                       </div>
-
-                      <p className="text-sm text-gray-600 mb-3 line-clamp-1">{job.description}</p>
-
-                      <div className="flex items-center justify-between">
-                        <div className="flex gap-2 flex-wrap">
-                          <span className="px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">
-                            {job.type}
-                          </span>
-                          {job.tags.slice(0, 2).map(tag => (
-                            <span key={tag} className="px-2.5 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">
-                              {tag}
-                            </span>
-                          ))}
+                      <div className="text-center border-l border-r">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {dailyActivity.length > 0 ? Math.max(...dailyActivity.map(d => d.count)) : 0}
                         </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          <span className="font-semibold text-gray-900">{job.salary}</span>
-                          <span>{job.postedDate}</span>
+                        <div className="text-xs text-gray-500 mt-1">최고 기록</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                          {thisWeekBookmarks > 0 ? Math.round(thisWeekBookmarks / 7 * 10) / 10 : 0}
                         </div>
+                        <div className="text-xs text-gray-500 mt-1">일 평균</div>
                       </div>
                     </div>
                   </div>
+                )}
+              </div>
+
+              {/* 오른쪽: 최근 채팅 */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden flex flex-col" style={{ height: '480px' }}>
+                <div className="p-6 border-b bg-gradient-to-r from-purple-50 to-blue-50">
+                  <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <MessageCircle size={20} className="text-purple-600" />
+                    최근 채팅
+                  </h3>
+                  <p className="text-sm text-gray-500 mt-1">진행 중인 대화를 확인하세요</p>
                 </div>
-              ))
-            )}
+
+                {loading ? (
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : chats.length === 0 ? (
+                  <div className="flex-1 flex items-center justify-center text-center p-6">
+                    <div>
+                      <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MessageCircle size={32} className="text-gray-400" />
+                      </div>
+                      <h4 className="text-base font-semibold text-gray-900 mb-2">대화가 없습니다</h4>
+                      <p className="text-sm text-gray-500 mb-4">릴스에서 관심있는 직업을 찾고<br/>대화를 시작해보세요!</p>
+                      <button
+                        onClick={onViewReels}
+                        className="px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:shadow-lg transition text-sm font-semibold"
+                      >
+                        릴스 보기
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-y-auto">
+                    {chats.slice(0, 5).map(chat => (
+                      <div
+                        key={chat.id}
+                        onClick={() => handleSelectChat(chat)}
+                        className={`p-4 border-b hover:bg-purple-50 cursor-pointer transition ${
+                          activeChat?.id === chat.id ? 'bg-purple-50 border-l-4 border-l-purple-500' : ''
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="relative flex-shrink-0">
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-md">
+                              {chat.vloggerName?.[0] || 'V'}
+                            </div>
+                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between mb-1">
+                              <h4 className="font-semibold text-gray-900 text-sm">{chat.vloggerName}</h4>
+                              <span className="text-xs text-gray-400">
+                                {chat.lastTimestamp?.seconds 
+                                  ? new Date(chat.lastTimestamp.seconds * 1000).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
+                                  : ''}
+                              </span>
+                            </div>
+                            <p className="text-xs text-gray-500 mb-1">{chat.vloggerRole}</p>
+                            <p className="text-sm text-gray-600 truncate">{chat.lastMessage || '대화를 시작해보세요'}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

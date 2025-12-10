@@ -207,6 +207,7 @@ export default function App() {
             onStartChat={handleStartChat}
             onViewReels={() => setView('reels')}
             onToggleSidebar={() => setShowMobileSidebar(true)}
+            currentUser={user}
           />
         ) : view === 'admin' && isAdmin ? (
           /* 관리자 뷰 */
