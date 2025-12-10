@@ -6,7 +6,11 @@ import {
 import { 
   serverTimestamp,
   doc,
-  setDoc
+  setDoc,
+  collection,
+  query,
+  where,
+  onSnapshot
 } from 'firebase/firestore';
 
 // Config & Data
@@ -22,6 +26,7 @@ export default function App() {
   const [authError, setAuthError] = useState(null);
   const [view, setView] = useState('dashboard'); // 'dashboard', 'chat', 'reels', or 'admin'
   const [activeChat, setActiveChat] = useState(null);
+  const [allChats, setAllChats] = useState([]); // 모든 채팅 목록
   // 관리자 상태는 초기화 시 localStorage에서 읽어옴
   const [isAdmin, setIsAdmin] = useState(() => {
     return localStorage.getItem('isAdmin') === 'true';
@@ -72,6 +77,22 @@ export default function App() {
     initAuth();
     return () => unsubscribe();
   }, []);
+
+  // 채팅 목록 구독
+  useEffect(() => {
+    if (!user) return;
+    
+    const chatsRef = collection(db, 'artifacts', appId, 'public', 'data', 'chats');
+    const q = query(chatsRef, where('guestId', '==', user.uid));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      let chatList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      chatList.sort((a, b) => (b.lastTimestamp?.seconds || 0) - (a.lastTimestamp?.seconds || 0));
+      setAllChats(chatList);
+    });
+    
+    return () => unsubscribe();
+  }, [user]);
 
   const handleStartChat = async (vlog) => {
     if (!user) return;
@@ -188,7 +209,13 @@ export default function App() {
       <div className="hidden sm:flex">
         <Sidebar 
           currentView={view} 
-          onViewChange={setView} 
+          onViewChange={(newView) => {
+            setView(newView);
+            // 채팅 뷰로 전환할 때 채팅이 없으면 최근 채팅 자동 선택
+            if (newView === 'chat' && !activeChat && allChats.length > 0) {
+              setActiveChat(allChats[0]);
+            }
+          }} 
           onLogout={handleLogout}
           onAdminClick={handleAdminClick}
           isAdmin={isAdmin}
@@ -210,6 +237,10 @@ export default function App() {
               onViewChange={(newView) => {
                 setView(newView);
                 setShowMobileSidebar(false);
+                // 채팅 뷰로 전환할 때 채팅이 없으면 최근 채팅 자동 선택
+                if (newView === 'chat' && !activeChat && allChats.length > 0) {
+                  setActiveChat(allChats[0]);
+                }
               }} 
               onLogout={handleLogout}
               onAdminClick={handleAdminClick}
