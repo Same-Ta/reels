@@ -133,15 +133,13 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
         {/* Header */}
         <div className="h-14 sm:h-20 bg-white border-b border-gray-200 flex items-center justify-between px-3 sm:px-8 shadow-sm z-10">
           <div className="flex items-center gap-2 sm:gap-4">
-            {/* 모바일 햄버거 메뉴 버튼 */}
-            {onToggleSidebar && (
-              <button 
-                onClick={onToggleSidebar}
-                className="md:hidden p-2 hover:bg-gray-100 rounded-full transition"
-              >
-                <Menu size={20} className="text-gray-600" />
-              </button>
-            )}
+            {/* 모바일 햄버거 메뉴 버튼 - 항상 표시 */}
+            <button 
+              onClick={onToggleSidebar}
+              className="sm:hidden p-2 hover:bg-gray-100 rounded-full transition"
+            >
+              <Menu size={20} className="text-gray-600" />
+            </button>
             <div className="relative">
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                 {activeChat.vloggerName?.[0] || 'V'}

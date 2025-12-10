@@ -44,7 +44,6 @@ const ReelsView = ({ onClose, onStartChat }) => {
   const [email, setEmail] = useState('');
   const [selectedMentor, setSelectedMentor] = useState(null);
   const [showChatAlert, setShowChatAlert] = useState(false);
-  const [showLinkModal, setShowLinkModal] = useState(true);
   
   // 현재 UI상 소리 상태 (화면에 아이콘 띄울지 말지 결정)
   // 초기값: true (무음)
@@ -286,65 +285,6 @@ const ReelsView = ({ onClose, onStartChat }) => {
       ref={containerRef}
       className="absolute inset-0 z-50 bg-black flex flex-col overflow-hidden touch-none h-[100dvh]"
     >
-      {/* 영상 재생 안내 모달 */}
-      {showLinkModal && (
-        <div className="absolute inset-0 z-[100] flex items-start justify-center pt-20 px-4 pointer-events-auto">
-          <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl max-w-md w-full p-6 relative animate-fade-in">
-            <button 
-              onClick={() => setShowLinkModal(false)}
-              className="absolute top-4 right-4 p-2 hover:bg-gray-200 rounded-full transition"
-            >
-              <X size={20} className="text-gray-700" />
-            </button>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Play size={32} className="text-white fill-white" />
-              </div>
-              
-              <h3 className="text-xl font-bold text-gray-900 mb-3">
-                영상이 재생되지 않나요?
-              </h3>
-              
-              <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                일부 환경에서 영상이 재생되지 않을 수 있습니다.<br/>
-                아래 링크를 통해 Chrome 브라우저로 접속해주세요.
-              </p>
-              
-              <button 
-                onClick={() => {
-                  const targetUrl = 'https://reels-one-jet.vercel.app/';
-                  const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-                  const isAndroid = /Android/i.test(userAgent);
-                  const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
-                  
-                  if (isAndroid) {
-                    // Android: Chrome으로 강제 리디렉션
-                    const cleanUrl = targetUrl.replace(/^https?:\/\//, '');
-                    const intentUrl = `intent://${cleanUrl}#Intent;scheme=https;package=com.android.chrome;end`;
-                    window.location.href = intentUrl;
-                  } else if (isIOS) {
-                    // iOS: 새 창으로 열기
-                    window.open(targetUrl, '_blank');
-                  } else {
-                    // 데스크톱: 새 창으로 열기
-                    window.open(targetUrl, '_blank');
-                  }
-                }}
-                className="w-full py-3 px-6 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                <span>Chrome에서 열기</span>
-                <Play size={18} />
-              </button>
-              
-              <p className="text-xs text-gray-500 mt-3">
-                https://reels-one-jet.vercel.app/
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* 헤더 */}
       <div className="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-6 z-30 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
         <h2 className="text-white font-bold text-lg flex items-center gap-2 pointer-events-auto">
