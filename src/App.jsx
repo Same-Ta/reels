@@ -13,14 +13,14 @@ import {
 import { auth, db, appId } from './config/firebase';
 
 // Components
-import { Sidebar, ChatListPanel, ChatArea, ReelsView, AdminLogin, AdminChatPanel, BookmarksView } from './components';
+import { Sidebar, ChatListPanel, ChatArea, ReelsView, AdminLogin, AdminChatPanel, BookmarksView, Dashboard } from './components';
 
 // Main App Component
 export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState(null);
-  const [view, setView] = useState('chat'); // 'chat', 'reels', or 'admin'
+  const [view, setView] = useState('dashboard'); // 'dashboard', 'chat', 'reels', or 'admin'
   const [activeChat, setActiveChat] = useState(null);
   // 관리자 상태는 초기화 시 localStorage에서 읽어옴
   const [isAdmin, setIsAdmin] = useState(() => {
@@ -163,8 +163,8 @@ export default function App() {
         />
       )}
 
-      {/* 1. Sidebar - 북마크/릴스 뷰에서는 모바일에서 숨김 */}
-      <div className={`${(view === 'bookmarks' || view === 'reels') ? 'hidden sm:flex' : 'flex'}`}>
+      {/* 1. Sidebar - 데스크톱에서만 보임 */}
+      <div className="hidden sm:flex">
         <Sidebar 
           currentView={view} 
           onViewChange={setView} 
@@ -174,18 +174,43 @@ export default function App() {
         />
       </div>
 
+      {/* 모바일 사이드바 오버레이 */}
+      {showMobileSidebar && (
+        <div 
+          className="sm:hidden fixed inset-0 z-[100] bg-black/50"
+          onClick={() => setShowMobileSidebar(false)}
+        >
+          <div 
+            className="absolute left-0 top-0 h-full w-64 bg-[#2c2f33] shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Sidebar 
+              currentView={view} 
+              onViewChange={(newView) => {
+                setView(newView);
+                setShowMobileSidebar(false);
+              }} 
+              onLogout={handleLogout}
+              onAdminClick={handleAdminClick}
+              isAdmin={isAdmin}
+            />
+          </div>
+        </div>
+      )}
+
       {/* 2. Content Area */}
       <div className="flex-1 flex relative overflow-hidden">
         
-        {/* 관리자 뷰 */}
-        {view === 'admin' && isAdmin ? (
-          <AdminChatPanel onBack={() => setView('chat')} />
-        ) : view === 'bookmarks' ? (
-          /* 북마크 뷰 */
-          <BookmarksView 
-            onClose={() => setView('chat')}
+        {/* 대시보드 뷰 (첫 화면) */}
+        {view === 'dashboard' ? (
+          <Dashboard 
             onStartChat={handleStartChat}
+            onViewReels={() => setView('reels')}
+            onToggleSidebar={() => setShowMobileSidebar(true)}
           />
+        ) : view === 'admin' && isAdmin ? (
+          /* 관리자 뷰 */
+          <AdminChatPanel onBack={() => setView('dashboard')} />
         ) : (
           <>
             {/* 모바일 오버레이 사이드바 */}
@@ -233,7 +258,7 @@ export default function App() {
             {/* 3. Reels Overlay (When view is 'reels') */}
             {view === 'reels' && (
               <ReelsView 
-                onClose={() => setView('chat')} 
+                onClose={() => setView('dashboard')} 
                 onStartChat={handleStartChat}
               />
             )}

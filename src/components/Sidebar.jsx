@@ -5,7 +5,8 @@ import {
   Settings,
   LogOut,
   Play,
-  Shield
+  Shield,
+  LayoutDashboard
 } from 'lucide-react';
 
 const Sidebar = ({ currentView, onViewChange, onLogout, onAdminClick, isAdmin }) => {
@@ -32,6 +33,15 @@ const Sidebar = ({ currentView, onViewChange, onLogout, onAdminClick, isAdmin })
       {/* Nav Items */}
       <div className="flex flex-col gap-3 sm:gap-6 w-full items-center flex-1">
         <button 
+          onClick={() => onViewChange('dashboard')}
+          className={`relative p-2 sm:p-3 rounded-xl transition-all duration-300 group ${currentView === 'dashboard' ? 'bg-white/10 text-purple-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
+        >
+          <LayoutDashboard size={20} className="sm:w-6 sm:h-6" />
+          {currentView === 'dashboard' && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-purple-400 rounded-r-full" />}
+          <span className="absolute left-14 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">대시보드</span>
+        </button>
+
+        <button 
           onClick={() => onViewChange('chat')}
           className={`relative p-2 sm:p-3 rounded-xl transition-all duration-300 group ${currentView === 'chat' ? 'bg-white/10 text-green-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
         >
@@ -57,15 +67,6 @@ const Sidebar = ({ currentView, onViewChange, onLogout, onAdminClick, isAdmin })
               </div>
             </div>
           )}
-        </button>
-
-        <button 
-          onClick={() => onViewChange('bookmarks')}
-          className={`relative p-2 sm:p-3 rounded-xl transition-all duration-300 group ${currentView === 'bookmarks' ? 'bg-white/10 text-yellow-400' : 'text-gray-400 hover:text-white hover:bg-white/5'}`}
-        >
-          <Bookmark size={20} className="sm:w-6 sm:h-6" />
-          {currentView === 'bookmarks' && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-yellow-400 rounded-r-full" />}
-          <span className="absolute left-14 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">저장된 영상</span>
         </button>
 
         <button className="p-2 sm:p-3 text-gray-400 hover:text-white hover:bg-white/5 rounded-xl transition-all group relative">
