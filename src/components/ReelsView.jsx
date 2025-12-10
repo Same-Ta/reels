@@ -291,20 +291,30 @@ const ReelsView = ({ onClose, onStartChat }) => {
           <p className="text-white/90 text-xs sm:text-sm font-medium">
             영상이 재생되지 않을 시 다음 링크로 접속하시기 바랍니다 (Chrome 브라우저 권장)
           </p>
-          <a 
-            href="googlechrome://navigate?url=https://reels-one-jet.vercel.app/" 
-            target="_blank" 
-            rel="noopener noreferrer"
+          <button 
             onClick={() => {
-              // Chrome이 설치되지 않은 경우 일반 링크로 폴백
-              setTimeout(() => {
-                window.open('https://reels-one-jet.vercel.app/', '_blank');
-              }, 500);
+              const targetUrl = 'https://reels-one-jet.vercel.app/';
+              const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+              const isAndroid = /Android/i.test(userAgent);
+              const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
+              
+              if (isAndroid) {
+                // Android: Chrome으로 강제 리디렉션
+                const cleanUrl = targetUrl.replace(/^https?:\/\//, '');
+                const intentUrl = `intent://${cleanUrl}#Intent;scheme=https;package=com.android.chrome;end`;
+                window.location.href = intentUrl;
+              } else if (isIOS) {
+                // iOS: 새 창으로 열기
+                window.open(targetUrl, '_blank');
+              } else {
+                // 데스크톱: 새 창으로 열기
+                window.open(targetUrl, '_blank');
+              }
             }}
-            className="text-blue-400 hover:text-blue-300 text-xs sm:text-sm underline mt-1 inline-block pointer-events-auto"
+            className="text-blue-400 hover:text-blue-300 text-xs sm:text-sm underline mt-1 inline-block pointer-events-auto cursor-pointer bg-transparent border-none"
           >
             https://reels-one-jet.vercel.app/
-          </a>
+          </button>
         </div>
       </div>
 

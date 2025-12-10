@@ -30,6 +30,27 @@ export default function App() {
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [isChatListCollapsed, setIsChatListCollapsed] = useState(false);
 
+  // Instagram 인앱 브라우저 감지 및 리디렉션
+  useEffect(() => {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    const isInstagram = /Instagram/i.test(userAgent);
+    
+    if (isInstagram) {
+      const currentUrl = window.location.href;
+      const isAndroid = /Android/i.test(userAgent);
+      const isIOS = /iPhone|iPad|iPod/i.test(userAgent);
+      
+      if (isAndroid) {
+        // Android: Chrome으로 강제 리디렉션
+        const intentUrl = `intent://${currentUrl.replace(/^https?:\/\//, '')}#Intent;scheme=https;package=com.android.chrome;end`;
+        window.location.href = intentUrl;
+      } else if (isIOS) {
+        // iOS: Safari로 리디렉션 안내
+        alert('Instagram 내부 브라우저에서는 일부 기능이 제한됩니다.\n\n우측 상단 \'...\' 메뉴를 눌러 \'Safari에서 열기\' 또는 \'Chrome에서 열기\'를 선택해주세요.');
+      }
+    }
+  }, []);
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
@@ -244,8 +265,8 @@ export default function App() {
               </div>
             )}
 
-            {/* Chat List: 항상 보임 (모바일에서는 접기 가능) */}
-            <div className={`flex flex-col border-r border-gray-700 h-full ${isChatListCollapsed ? 'w-16' : 'w-full sm:w-80'}`}>
+            {/* Chat List: 데스크톱에서만 보임 */}
+            <div className={`hidden sm:flex flex-col border-r border-gray-700 h-full ${isChatListCollapsed ? 'w-16' : 'w-80'}`}>
               <ChatListPanel 
                 currentUser={user} 
                 activeChatId={activeChat?.id} 
