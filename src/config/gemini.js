@@ -1,6 +1,6 @@
 // Gemini API Configuration
 export const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-export const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+export const GEMINI_API_URL = import.meta.env.VITE_GEMINI_API_URL;
 
 // 대화 문맥을 파악하여 다음 질문 3개를 추천하는 함수
 export const generateSuggestedQuestions = async (chatHistory, vloggerInfo) => {
