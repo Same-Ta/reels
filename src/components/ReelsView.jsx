@@ -309,13 +309,13 @@ const ReelsView = ({ onClose, onStartChat }) => {
             />
           </div>
 
-          {/* 소리 켜기/끄기 오버레이 버튼 - 하단 영역 제외 */}
+          {/* 소리 켜기/끄기 오버레이 버튼 - 하단 영역 완전 제외 */}
           <div 
-            className="absolute inset-0 z-20 flex items-center justify-center cursor-pointer" 
+            className="absolute top-0 left-0 right-0 z-10 flex items-center justify-center cursor-pointer" 
             onClick={handleOverlayClick}
             style={{ 
               touchAction: 'none',
-              paddingBottom: '200px' // 하단 정보 영역만큼 패딩 추가
+              bottom: '240px' // 하단 240px는 오버레이가 차지하지 않음
             }}
           >
             {/* 소리 꺼진 상태(isMuted=true)일 때만 아이콘 표시 */}
