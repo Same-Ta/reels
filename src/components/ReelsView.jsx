@@ -298,7 +298,7 @@ const ReelsView = ({ onClose, onStartChat }) => {
             <iframe 
               ref={iframeRef}
               className="absolute inset-0 w-full h-full pointer-events-none object-cover"
-              style={{ transform: 'scale(1.35)' }}
+              style={{ transform: 'scale(1.15)' }}
               // ★ mute=1 (무음 시작) : 이것이 안정성의 핵심입니다. 
               // 터치하면 소리가 켜지고, 그 상태가 유지됩니다.
               src={`https://www.youtube.com/embed/${currentVlog.videoId}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&iv_load_policy=3&playsinline=1&loop=1&playlist=${currentVlog.videoId}&showinfo=0&disablekb=1&fs=0&enablejsapi=1&origin=${window.location.origin}`}
