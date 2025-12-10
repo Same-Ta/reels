@@ -248,13 +248,8 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
              </div>
           </div>
           <h3 className="text-xl font-bold text-gray-800">{activeChat.vloggerName}</h3>
-          <p className="text-sm text-gray-500 mb-4">{activeChat.vloggerRole || vlogInfo.role}</p>
-          
-          {/* 자기소개 */}
-          <div className="w-full bg-gray-50 rounded-lg p-4">
-            <h4 className="text-xs font-bold text-gray-500 mb-2">자기소개</h4>
-            <p className="text-sm text-gray-700 leading-relaxed">{vlogInfo.description || '안녕하세요! 현직자와의 대화를 통해 직무에 대해 궁금한 점을 물어보세요.'}</p>
-          </div>
+          <p className="text-sm text-gray-500 mb-2">{activeChat.vloggerRole || vlogInfo.role}</p>
+          <p className="text-sm text-gray-600 text-center px-4">{vlogInfo.description || '현직자와의 대화를 통해 직무에 대해 알아보세요'}</p>
         </div>
 
         <div className="p-6 space-y-6">
@@ -265,14 +260,21 @@ const ChatArea = ({ activeChat, currentUser, onToggleSidebar }) => {
                  <Briefcase size={16} className="text-gray-400 mt-0.5" />
                  <div>
                    <p className="text-gray-800 font-medium">{vlogInfo.role || '직무 정보 없음'}</p>
-                   <p className="text-xs text-gray-400">직무</p>
+                   <p className="text-xs text-gray-400">Role</p>
                  </div>
               </li>
               <li className="flex items-start gap-3">
                  <div className="text-gray-400 mt-0.5"><span className="text-base">📍</span></div>
                  <div>
                    <p className="text-gray-800 font-medium">{vlogInfo.location || 'Korea'}</p>
-                   <p className="text-xs text-gray-400">근무지</p>
+                   <p className="text-xs text-gray-400">Location</p>
+                 </div>
+              </li>
+              <li className="flex items-start gap-3">
+                 <div className="text-gray-400 mt-0.5"><span className="text-base">✉️</span></div>
+                 <div>
+                   <p className="text-gray-800 font-medium">{vlogInfo.email || 'private@mail.com'}</p>
+                   <p className="text-xs text-gray-400">Email</p>
                  </div>
               </li>
             </ul>
