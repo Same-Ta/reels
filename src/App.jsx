@@ -243,23 +243,25 @@ export default function App() {
           <AdminChatPanel onBack={() => setView('dashboard')} />
         ) : (
           <>
-            {/* 모바일 오버레이 사이드바 */}
+            {/* 모바일 오버레이 사이드바 - 전체 카테고리 메뉴 */}
             {showMobileSidebar && (
               <div 
-                className="md:hidden fixed inset-0 z-50 bg-black/50"
+                className="md:hidden fixed inset-0 z-[100] bg-black/50"
                 onClick={() => setShowMobileSidebar(false)}
               >
                 <div 
-                  className="absolute left-0 top-0 h-full w-80 bg-[#25282c] shadow-xl animate-slide-in"
+                  className="absolute left-0 top-0 h-full w-64 bg-[#2c2f33] shadow-xl animate-slide-in"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <ChatListPanel 
-                    currentUser={user} 
-                    activeChatId={activeChat?.id} 
-                    onSelectChat={(chat) => {
-                      setActiveChat(chat);
+                  <Sidebar 
+                    currentView={view} 
+                    onViewChange={(newView) => {
+                      setView(newView);
                       setShowMobileSidebar(false);
-                    }}
+                    }} 
+                    onLogout={handleLogout}
+                    onAdminClick={handleAdminClick}
+                    isAdmin={isAdmin}
                   />
                 </div>
               </div>
