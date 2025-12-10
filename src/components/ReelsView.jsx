@@ -411,7 +411,15 @@ const ReelsView = ({ onClose, onStartChat }) => {
       {/* 채팅 시작 알림 팝업 */}
       {showChatAlert && (
         <div className="fixed inset-0 z-[100] bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden relative">
+            {/* X 닫기 버튼 */}
+            <button
+              onClick={() => setShowChatAlert(false)}
+              className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
+            >
+              <X size={24} className="text-gray-500" />
+            </button>
+            
             <div className="p-6">
               <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-4">
                 <MessageCircle size={32} className="text-white" />
