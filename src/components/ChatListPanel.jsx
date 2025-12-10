@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, ChevronLeft, ChevronRight, Menu } from 'lucide-react';
 import { db, appId } from '../config/firebase';
 import { 
   collection, 
@@ -8,7 +8,7 @@ import {
   where 
 } from 'firebase/firestore';
 
-const ChatListPanel = ({ currentUser, activeChatId, onSelectChat, isCollapsed, onToggleCollapse }) => {
+const ChatListPanel = ({ currentUser, activeChatId, onSelectChat, isCollapsed, onToggleCollapse, onToggleSidebar, showMobileMenu }) => {
   const [chats, setChats] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -47,12 +47,24 @@ const ChatListPanel = ({ currentUser, activeChatId, onSelectChat, isCollapsed, o
       {/* Search Header */}
       <div className="p-4 sm:p-6">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-white font-bold text-xl">Messages</h2>
+          <div className="flex items-center gap-3">
+            {/* 모바일 햄버거 버튼 - 전체 화면일 때만 표시 */}
+            {showMobileMenu && onToggleSidebar && (
+              <button 
+                onClick={onToggleSidebar}
+                className="sm:hidden p-2 hover:bg-gray-700 rounded-lg transition-colors relative z-20 active:bg-gray-600"
+                aria-label="메뉴 열기"
+              >
+                <Menu size={24} className="text-gray-300" />
+              </button>
+            )}
+            <h2 className="text-white font-bold text-xl">Messages</h2>
+          </div>
           <div className="flex items-center gap-2">
             {onToggleCollapse && (
               <button 
                 onClick={onToggleCollapse}
-                className="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center text-gray-300 hover:bg-gray-600"
+                className="hidden sm:flex w-8 h-8 rounded-full bg-gray-700 items-center justify-center text-gray-300 hover:bg-gray-600"
                 title="접기"
               >
                 <ChevronLeft size={18} />

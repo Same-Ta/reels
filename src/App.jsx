@@ -267,25 +267,29 @@ export default function App() {
               </div>
             )}
 
-            {/* Chat List: 데스크톱에서만 보임 */}
-            <div className={`hidden sm:flex flex-col border-r border-gray-700 h-full ${isChatListCollapsed ? 'w-16' : 'w-80'}`}>
+            {/* Chat List */}
+            <div className={`${activeChat ? 'hidden sm:flex' : 'flex'} flex-col border-r border-gray-700 h-full ${isChatListCollapsed ? 'w-16' : activeChat ? 'w-80' : 'w-full sm:w-80'}`}>
               <ChatListPanel 
                 currentUser={user} 
                 activeChatId={activeChat?.id} 
                 onSelectChat={setActiveChat}
                 isCollapsed={isChatListCollapsed}
                 onToggleCollapse={() => setIsChatListCollapsed(!isChatListCollapsed)}
+                onToggleSidebar={() => setShowMobileSidebar(true)}
+                showMobileMenu={!activeChat}
               />
             </div>
             
-            {/* Chat Window */}
-            <div className="flex-1 flex-col h-full flex">
-              <ChatArea 
-                activeChat={activeChat} 
-                currentUser={user}
-                onToggleSidebar={() => setShowMobileSidebar(true)}
-              />
-            </div>
+            {/* Chat Window - activeChat이 있을 때만 표시 */}
+            {activeChat && (
+              <div className="flex-1 flex-col h-full flex">
+                <ChatArea 
+                  activeChat={activeChat} 
+                  currentUser={user}
+                  onToggleSidebar={() => setShowMobileSidebar(true)}
+                />
+              </div>
+            )}
 
             {/* 3. Reels Overlay (When view is 'reels') */}
             {view === 'reels' && (
